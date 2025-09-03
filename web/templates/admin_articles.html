@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理 - 管理后台</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <h2>博客管理</h2>
+            <ul>
+                <li><a href="/admin">仪表板</a></li>
+                <li><a href="/admin/articles" class="active">文章管理</a></li>
+                <li><a href="/admin/categories">分类管理</a></li>
+                <li><a href="/admin/tags">标签管理</a></li>
+                <li><a href="/admin/comments">评论管理</a></li>
+                <li><a href="/admin/files">文件管理</a></li>
+                <li><a href="/admin/users">用户管理</a></li>
+            </ul>
+        </aside>
+        
+        <!-- 主要内容 -->
+        <main class="main-content">
+            <div class="header">
+                <h1>文章管理</h1>
+                <a href="/admin/articles/create" class="btn btn-primary">新建文章</a>
+            </div>
+            
+            <div class="articles-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>分类</th>
+                            <th>状态</th>
+                            <th>置顶</th>
+                            <th>评论</th>
+                            <th>发布时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>如何使用Golang构建Web应用</td>
+                            <td>技术</td>
+                            <td>已发布</td>
+                            <td>是</td>
+                            <td>5</td>
+                            <td>2023-01-15</td>
+                            <td>
+                                <a href="/admin/articles/edit/1" class="btn btn-primary">编辑</a>
+                                <button class="btn btn-danger" onclick="deleteArticle(1)">删除</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>我的旅行日记</td>
+                            <td>生活</td>
+                            <td>草稿</td>
+                            <td>否</td>
+                            <td>0</td>
+                            <td>-</td>
+                            <td>
+                                <a href="/admin/articles/edit/2" class="btn btn-primary">编辑</a>
+                                <button class="btn btn-danger" onclick="deleteArticle(2)">删除</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        function deleteArticle(id) {
+            if (confirm('确定要删除这篇文章吗？')) {
+                // 这里应该发送删除请求到后端
+                alert('文章已删除');
+            }
+        }
+    </script>
+</body>
+</html>
