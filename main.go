@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// 初始化路由
-	r := router.Init()
+	r := router.InitRoutes()
 
 	// 启动服务器
 	port := config.GetString("server.port")

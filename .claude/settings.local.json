@@ -3,7 +3,10 @@
     "allow": [
       "Bash(rm:*)",
       "Bash(mv:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(go build:*)",
+      "Bash(go run:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

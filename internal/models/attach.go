@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"mime"
 	"path/filepath"
 	"strings"
 	"time"
@@ -11,25 +10,17 @@ import (
 // Attach 附件模型
 type Attach struct {
 	BaseModel
-	Name         string     `json:"name" gorm:"size:256;not null;comment:附件名"`
-	Remark       string     `json:"remark" gorm:"size:512;comment:附件描述"`
-	Path         string     `json:"path" gorm:"size:512;not null;comment:附件路径"`
-	Flag         string     `json:"flag" gorm:"size:256;comment:标识"`
-	MineType     string     `json:"mine_type" gorm:"size:128;comment:文件类型mineType"`
-	Type         string     `json:"type" gorm:"size:32;index;comment:文件类型"`
-	CreateTime   time.Time  `json:"create_time" gorm:"not null;comment:创建时间"`
-	UpdateTime   *time.Time `json:"update_time" gorm:"comment:更新时间"`
-	ConfigId     int        `json:"config_id" gorm:"not null;comment:存储策略id"`
-	URL          string     `json:"url" gorm:"size:512;not null;comment:访问路径"`
-	AttachGroup  string     `json:"attach_group" gorm:"size:256;default:'default';comment:附件分组"`
-	Storage      int        `json:"storage" gorm:"not null;comment:存储器类型"`
-	CreateUserId *uint64    `json:"create_user_id" gorm:"comment:添加人"`
-	UpdateUserId *uint64    `json:"update_user_id" gorm:"comment:更新人"`
+	Name   string `json:"name" gorm:"size:256;not null;comment:附件名"`
+	Remark string `json:"remark" gorm:"size:512;comment:附件描述"`
+	Path   string `json:"path" gorm:"size:512;not null;comment:附件路径"`
+	Flag   string `json:"flag" gorm:"size:256;comment:标识"`
+	Type   string `json:"type" gorm:"size:32;index;comment:文件类型"`
+	URL    string `json:"url" gorm:"size:512;not null;comment:访问路径"`
 }
 
 // TableName 指定表名
 func (Attach) TableName() string {
-	return "p_attach"
+	return "m_attach"
 }
 
 // AttachType 附件类型常量
@@ -70,12 +61,6 @@ const (
 	MaxImageSize   = 10 * 1024 * 1024 // 10MB
 	MaxGeneralSize = 50 * 1024 * 1024 // 50MB
 )
-
-// IsImage 检查是否为图片文件
-func (a *Attach) IsImage() bool {
-	return SupportedImageTypes[a.MineType] ||
-		SupportedImageExtensions[strings.ToLower(filepath.Ext(a.Name))]
-}
 
 // GetSizeString 获取文件大小的可读字符串
 func (a *Attach) GetSizeString() string {

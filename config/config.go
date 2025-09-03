@@ -39,8 +39,8 @@ func setDefaults() {
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", "3306")
 	viper.SetDefault("database.username", "root")
-	viper.SetDefault("database.password", "")
-	viper.SetDefault("database.dbname", "memberlink_lite")
+	viper.SetDefault("database.password", "123456")
+	viper.SetDefault("database.dbname", "matuto_blog")
 	viper.SetDefault("database.charset", "utf8mb4")
 	viper.SetDefault("database.parseTime", true)
 	viper.SetDefault("database.loc", "Local")
@@ -51,8 +51,8 @@ func setDefaults() {
 	viper.SetDefault("database.conn_max_lifetime_hours", 1)
 
 	// JWT配置
-	viper.SetDefault("jwt.secret", "memberlink-lite-secret-key-change-in-production")
-	viper.SetDefault("jwt.issuer", "memberlink-lite")
+	viper.SetDefault("jwt.secret", "matuto-blog-secret-key-change-in-production")
+	viper.SetDefault("jwt.issuer", "matuto-blog")
 	viper.SetDefault("jwt.access_token_ttl", 24)   // 小时
 	viper.SetDefault("jwt.refresh_token_ttl", 168) // 小时 (7天)
 
@@ -64,6 +64,10 @@ func setDefaults() {
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.base_path", "./uploads")
 	viper.SetDefault("storage.local.base_url", "http://localhost:8080/uploads/")
+
+	// 模板配置
+	viper.SetDefault("theme.current", "default")
+	viper.SetDefault("theme.path", "./web/templates")
 
 	// CORS配置
 	viper.SetDefault("cors.allowed_origins", "http://localhost:3000,http://localhost:8080")

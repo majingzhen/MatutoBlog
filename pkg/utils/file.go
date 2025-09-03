@@ -3,8 +3,11 @@ package utils
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/gin-contrib/multitemplate"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -222,4 +225,45 @@ func SanitizeFilename(filename string) string {
 	}
 
 	return filename
+}
+
+func getFilelist(path string, stuffix string) (files []string) {
+	// 遍历目录
+	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+		if f == nil {
+			return err
+		}
+		if f.IsDir() {
+			return nil
+		}
+		// 将模板后缀的文件放到列表
+		if strings.HasSuffix(path, stuffix) {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return
+}
+
+// LoadTemplateFiles 加载模板
+func LoadTemplateFiles(templateDir, stuffix string) multitemplate.Renderer {
+	r := multitemplate.NewRenderer()
+	rd, _ := ioutil.ReadDir(templateDir)
+	for _, fi := range rd {
+		if fi.IsDir() {
+			// 如果是目录
+			for _, f := range getFilelist(filepath.Join(templateDir, fi.Name()), stuffix) {
+				// 添加到模板的时候，去掉根路径，并确保使用正斜杠
+				templatePath := filepath.ToSlash(f[len(templateDir)+1:])
+				r.AddFromFiles(templatePath, f)
+			}
+		} else {
+			if strings.HasSuffix(fi.Name(), stuffix) {
+				// 如果在根目录底下的文件直接添加
+				filePath := filepath.Join(templateDir, fi.Name())
+				r.AddFromFiles(fi.Name(), filePath)
+			}
+		}
+	}
+	return r
 }

@@ -1,0 +1,128 @@
+{{define "content"}}
+<div class="row">
+    <div class="col-lg-8">
+        <article>
+            {{if .article.IsTop}}
+            <div class="alert alert-info">
+                <i class="fas fa-thumbtack"></i> 这是一篇置顶文章
+            </div>
+            {{end}}
+
+            <header class="mb-4">
+                <h1>{{.article.Title}}</h1>
+                <div class="text-muted mb-3">
+                    <small>
+                        分类: <a href="/category/{{.article.Category.ID}}">{{.article.Category.Name}}</a> |
+                        发布于: {{.article.PublishedAt.Format "2006-01-02 15:04"}} |
+                        阅读: {{.article.ViewCount}}
+                    </small>
+                </div>
+                {{if .article.Tags}}
+                <div class="mb-3">
+                    {{range .article.Tags}}
+                    <a href="/tag/{{.ID}}" class="badge bg-primary text-decoration-none me-1" style="background-color: {{.Color}} !important;">{{.Name}}</a>
+                    {{end}}
+                </div>
+                {{end}}
+            </header>
+
+            {{if .article.Thumbnail}}
+            <div class="mb-4">
+                <img src="{{.article.Thumbnail}}" class="img-fluid rounded" alt="{{.article.Title}}">
+            </div>
+            {{end}}
+
+            <div class="content">
+                {{.article.Content | html}}
+            </div>
+        </article>
+
+        {{if .article.IsComment}}
+        <!-- 评论区 -->
+        <div class="mt-5">
+            <h3>评论 ({{.article.CommentCount}})</h3>
+            
+            <!-- 评论表单 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form id="commentForm" action="/comment/submit" method="POST">
+                        <input type="hidden" name="article_id" value="{{.article.ID}}">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <input type="text" name="user_name" class="form-control" placeholder="昵称 *" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <input type="email" name="email" class="form-control" placeholder="邮箱">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <input type="url" name="website" class="form-control" placeholder="网站">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="content" class="form-control" rows="4" placeholder="请输入评论内容..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">提交评论</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 评论列表 -->
+            {{if .article.Comments}}
+            <div class="comments">
+                {{range .article.Comments}}
+                <div class="comment mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong>{{.UserName}}</strong>
+                                    {{if .Website}}
+                                    <small><a href="{{.Website}}" target="_blank">{{.Website}}</a></small>
+                                    {{end}}
+                                </div>
+                                <small class="text-muted">{{.CreatedAt.Format "2006-01-02 15:04"}}</small>
+                            </div>
+                            <div>{{.Content}}</div>
+                            
+                            <!-- 回复 -->
+                            {{if .Children}}
+                            <div class="replies mt-3 ms-4">
+                                {{range .Children}}
+                                <div class="reply card bg-light">
+                                    <div class="card-body py-2">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <strong>{{.UserName}}</strong>
+                                            <small class="text-muted">{{.CreatedAt.Format "2006-01-02 15:04"}}</small>
+                                        </div>
+                                        <div>{{.Content}}</div>
+                                    </div>
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{else}}
+            <div class="alert alert-info">暂无评论，快来抢沙发吧！</div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="alert alert-warning mt-4">
+            该文章已关闭评论功能
+        </div>
+        {{end}}
+    </div>
+
+    <div class="col-lg-4">
+        <!-- 回到首页 -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <a href="/" class="btn btn-primary">← 返回首页</a>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
