@@ -20,6 +20,12 @@
         <template #title>首页</template>
       </el-menu-item>
 
+      <!-- 发布文章 -->
+      <el-menu-item index="2">
+        <el-icon><Edit /></el-icon>
+        <template #title>发布文章</template>
+      </el-menu-item>
+
       <!-- 用户管理（带子菜单） -->
       <el-sub-menu index="2">
         <template #title>

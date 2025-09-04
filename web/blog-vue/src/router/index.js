@@ -29,6 +29,11 @@ const router = createRouter({
           name: 'Home',
           component: () => import('@/views/home/index.vue')
         },
+        {
+          path: 'publish',
+          name: 'Publish',
+          component: () => import('@/views/publish/index.vue')
+        },
         // 用户列表
         {
           path: '/user/list',
