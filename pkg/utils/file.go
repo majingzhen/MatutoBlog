@@ -267,3 +267,35 @@ func LoadTemplateFiles(templateDir, stuffix string) multitemplate.Renderer {
 	}
 	return r
 }
+
+// LoadThemeTemplateFiles 根据主题加载模板
+//func LoadThemeTemplateFiles(baseDir, stuffix string) multitemplate.Renderer {
+//	r := multitemplate.NewRenderer()
+//	funcMap := utils.AddTemplateFuncMap()
+//	rd, _ := ioutil.ReadDir(baseDir)
+//	for _, fi := range rd {
+//		fmt.Println(fi.Name())
+//		fmt.Println(fi.IsDir())
+//		if fi.IsDir() {
+//			// 如果是目录
+//			for _, f := range getFilelist(filepath.Join(baseDir, fi.Name()), stuffix) {
+//				// 添加到模板的时候，去掉根路径，并确保使用正斜杠
+//				templatePath := filepath.ToSlash(f)
+//				tmpl := template.New(templatePath).Funcs(funcMap)
+//				tmpl, _ = tmpl.ParseFiles(f)
+//				fmt.Scan(templatePath)
+//				r.Add(templatePath, tmpl)
+//			}
+//		} else {
+//			if strings.HasSuffix(fi.Name(), stuffix) {
+//				// 如果在根目录底下的文件直接添加
+//				filePath := filepath.Join(baseDir, fi.Name())
+//				tmpl := template.New(fi.Name()).Funcs(funcMap)
+//				tmpl, _ = tmpl.ParseFiles(filePath)
+//				fmt.Scan(filePath)
+//				r.Add(fi.Name(), tmpl)
+//			}
+//		}
+//	}
+//	return r
+//}

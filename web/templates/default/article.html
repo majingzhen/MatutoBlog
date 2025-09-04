@@ -1,128 +1,1089 @@
-{{define "content"}}
-<div class="row">
-    <div class="col-lg-8">
-        <article>
-            {{if .article.IsTop}}
-            <div class="alert alert-info">
-                <i class="fas fa-thumbtack"></i> 这是一篇置顶文章
-            </div>
-            {{end}}
-
-            <header class="mb-4">
-                <h1>{{.article.Title}}</h1>
-                <div class="text-muted mb-3">
-                    <small>
-                        分类: <a href="/category/{{.article.Category.ID}}">{{.article.Category.Name}}</a> |
-                        发布于: {{.article.PublishedAt.Format "2006-01-02 15:04"}} |
-                        阅读: {{.article.ViewCount}}
-                    </small>
+{{ define "default/article.html" }}
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文章内容 - 简约活力博客</title>
+    <script src="https://res.gemcoder.com/js/reload.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+                  theme: {
+                      extend: {
+                          colors: {
+                              primary: '#3B82F6',
+                              secondary: '#10B981',
+                              accent: '#F59E0B',
+                              dark: '#1E293B',
+                              light: '#F8FAFC'
+                          },
+                          fontFamily: {
+                              sans: ['Inter', 'system-ui', 'sans-serif'],
+                          },
+                      }
+                  }
+              }
+    </script>
+    <style type="text/tailwindcss">
+      @layer utilities {
+          .content-auto {
+              content-visibility: auto;
+          }
+          .text-shadow {
+              text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .transition-custom {
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .article-content p {
+              @apply my-6 text-gray-700 leading-relaxed;
+          }
+          .article-content h2 {
+              @apply text-2xl font-bold text-dark mt-12 mb-4;
+          }
+          .article-content h3 {
+              @apply text-xl font-bold text-dark mt-10 mb-3;
+          }
+          .article-content ul {
+              @apply my-6 pl-6 list-disc text-gray-700 space-y-2;
+          }
+          .article-content blockquote {
+              @apply border-l-4 border-primary pl-4 italic my-6 text-gray-600;
+          }
+      }
+    </style>
+  </head>
+  <body class="bg-light text-dark font-sans antialiased">
+    <!-- 导航栏 -->
+    <header
+      class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm transition-custom"
+    >
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16 md:h-20">
+          <!-- Logo -->
+          <div class="flex items-center">
+            <a href="javascript:void(0);" class="flex items-center">
+              <span class="text-primary text-2xl font-bold">
+                Vibe
+                <span class="text-accent"> Blog </span>
+              </span>
+            </a>
+          </div>
+          <!-- 桌面导航 -->
+          <nav class="hidden md:flex space-x-8">
+            <a
+              href="javascript:void(0);"
+              class="text-dark hover:text-primary font-medium transition-custom"
+            >
+              首页
+            </a>
+            <a
+              href="javascript:void(0);"
+              class="text-dark hover:text-primary font-medium transition-custom"
+            >
+              分类
+            </a>
+            <a
+              href="javascript:void(0);"
+              class="text-dark hover:text-primary font-medium transition-custom"
+            >
+              热门
+            </a>
+            <a
+              href="javascript:void(0);"
+              class="text-dark hover:text-primary font-medium transition-custom"
+            >
+              关于
+            </a>
+          </nav>
+          <!-- 搜索和菜单按钮 -->
+          <div class="flex items-center space-x-4">
+            <button
+              class="p-2 rounded-full hover:bg-gray-100 transition-custom"
+            >
+              <i class="fas fa-search text-gray-600"> </i>
+            </button>
+            <button
+              class="p-2 rounded-full hover:bg-gray-100 transition-custom md:hidden"
+              id="mobile-menu-button"
+            >
+              <i class="fas fa-bars text-gray-600"> </i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- 移动端导航菜单 -->
+      <div class="md:hidden hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <a
+            href="javascript:void(0);"
+            class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+          >
+            首页
+          </a>
+          <a
+            href="javascript:void(0);"
+            class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+          >
+            分类
+          </a>
+          <a
+            href="javascript:void(0);"
+            class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+          >
+            热门
+          </a>
+          <a
+            href="javascript:void(0);"
+            class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+          >
+            关于
+          </a>
+        </div>
+      </div>
+    </header>
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 文章内容区域 -->
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- 文章主体 -->
+        <div class="lg:w-2/3">
+          <!-- 文章头部 -->
+          <article class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+            <div class="p-6 md:p-8">
+              <div class="flex items-center space-x-2 mb-4">
+                <span
+                  class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800"
+                >
+                  Web开发
+                </span>
+                <span class="text-xs text-gray-500">
+                  <i class="far fa-clock mr-1"> </i>
+                  2023-06-15
+                </span>
+              </div>
+              <h1
+                class="text-3xl md:text-4xl font-bold text-dark mb-6 leading-tight"
+              >
+                现代前端开发：2023年必备技术栈
+              </h1>
+              <!-- 作者信息 -->
+              <div class="flex items-center mb-8">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/866e3bde861a3d9ef5b4ee44194640d4.png"
+                  alt="作者头像"
+                  class="w-12 h-12 rounded-full object-cover mr-4"
+                />
+                <div>
+                  <h3 class="font-bold text-dark">张明</h3>
+                  <p class="text-sm text-gray-500">
+                    资深前端工程师 | 5年开发经验
+                  </p>
                 </div>
-                {{if .article.Tags}}
-                <div class="mb-3">
-                    {{range .article.Tags}}
-                    <a href="/tag/{{.ID}}" class="badge bg-primary text-decoration-none me-1" style="background-color: {{.Color}} !important;">{{.Name}}</a>
-                    {{end}}
+                <div class="ml-auto flex space-x-2">
+                  <button
+                    class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="far fa-bookmark text-gray-600"> </i>
+                  </button>
+                  <button
+                    class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="far fa-share-square text-gray-600"> </i>
+                  </button>
                 </div>
-                {{end}}
-            </header>
-
-            {{if .article.Thumbnail}}
-            <div class="mb-4">
-                <img src="{{.article.Thumbnail}}" class="img-fluid rounded" alt="{{.article.Title}}">
-            </div>
-            {{end}}
-
-            <div class="content">
-                {{.article.Content | html}}
-            </div>
-        </article>
-
-        {{if .article.IsComment}}
-        <!-- 评论区 -->
-        <div class="mt-5">
-            <h3>评论 ({{.article.CommentCount}})</h3>
-            
-            <!-- 评论表单 -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form id="commentForm" action="/comment/submit" method="POST">
-                        <input type="hidden" name="article_id" value="{{.article.ID}}">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <input type="text" name="user_name" class="form-control" placeholder="昵称 *" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <input type="email" name="email" class="form-control" placeholder="邮箱">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <input type="url" name="website" class="form-control" placeholder="网站">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <textarea name="content" class="form-control" rows="4" placeholder="请输入评论内容..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">提交评论</button>
-                    </form>
+              </div>
+              <!-- 文章封面图 -->
+              <div class="mb-8 rounded-xl overflow-hidden">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/ff3d13123209834e14633bfd08512e8f.png"
+                  alt="文章封面图"
+                  class="w-full h-auto object-cover"
+                />
+              </div>
+              <!-- 文章内容 -->
+              <div class="article-content">
+                <p>
+                  随着Web技术的快速发展，前端开发领域也在不断演进。本文将介绍2023年前端开发的必备技术栈，包括框架选择、构建工具、状态管理等方面的最新趋势和最佳实践。
+                </p>
+                <h2>前端框架的选择</h2>
+                <p>
+                  2023年，前端框架市场依然由三大主流框架主导，但它们各自的生态和应用场景有了更清晰的划分：
+                </p>
+                <h3>React</h3>
+                <p>
+                  React继续保持其市场领先地位，特别是在大型企业应用中。其组件化思想和虚拟DOM机制使其成为构建复杂交互界面的理想选择。
+                </p>
+                <blockquote>
+                  React的灵活性既是其优势也是挑战，它允许开发者以多种方式解决问题，但也需要团队建立良好的开发规范。
+                </blockquote>
+                <h3>Vue</h3>
+                <p>
+                  Vue凭借其易学性和出色的文档，成为初学者和中小型项目的首选。Vue
+                  3引入的Composition API进一步增强了其在复杂应用中的竞争力。
+                </p>
+                <h3>Svelte</h3>
+                <p>
+                  Svelte作为后起之秀，通过其编译时优化策略，生成高效的原生JavaScript代码，在性能敏感的应用中表现出色。
+                </p>
+                <h2>构建工具与开发环境</h2>
+                <p>
+                  构建工具领域在2023年经历了显著变化，Vite的崛起挑战了Webpack的统治地位：
+                </p>
+                <ul>
+                  <li>
+                    <strong> Vite </strong>
+                    ：基于ES模块的开发服务器，提供极速的热模块替换(HMR)，成为新项目的首选构建工具。
+                  </li>
+                  <li>
+                    <strong> Turbopack </strong>
+                    ：Webpack的继任者，由Webpack创始人开发，承诺比Vite更快的构建速度。
+                  </li>
+                  <li>
+                    <strong> esbuild </strong>
+                    ：Go语言编写的JavaScript打包器，以其惊人的速度被广泛用于开发工具链中。
+                  </li>
+                </ul>
+                <h2>样式解决方案</h2>
+                <p>
+                  CSS的发展也呈现多元化趋势，以下是2023年最受欢迎的样式解决方案：
+                </p>
+                <h3>Tailwind CSS</h3>
+                <p>
+                  实用优先的CSS框架，通过预定义的原子类加速UI开发，成为许多团队的首选。
+                </p>
+                <h3>CSS-in-JS</h3>
+                <p>
+                  Styled
+                  Components和Emotion等库继续在React生态中流行，提供组件级的样式封装。
+                </p>
+                <h3>CSS Modules</h3>
+                <p>
+                  一种本地化CSS的解决方案，无需额外依赖，简单高效，适合中小型项目。
+                </p>
+                <h2>状态管理与数据流</h2>
+                <p>随着应用复杂度的提升，有效的状态管理变得至关重要：</p>
+                <ul>
+                  <li>
+                    <strong> Redux Toolkit </strong>
+                    ：Redux的官方工具集，简化了Redux的使用，减少了样板代码。
+                  </li>
+                  <li>
+                    <strong> Zustand </strong>
+                    ：轻量级状态管理库，API简洁，学习曲线平缓。
+                  </li>
+                  <li>
+                    <strong> Jotai/Recoil </strong>
+                    ：原子化状态管理，适合构建复杂的状态依赖关系。
+                  </li>
+                </ul>
+                <blockquote>
+                  选择状态管理方案时，应考虑项目规模、团队熟悉度和性能需求，避免过度设计。
+                </blockquote>
+                <h2>未来趋势与展望</h2>
+                <p>展望未来，前端开发将继续朝着以下方向发展：</p>
+                <h3>Web Assembly</h3>
+                <p>
+                  Wasm将允许开发者使用其他语言编写高性能组件，进一步拓展Web平台的能力边界。
+                </p>
+                <h3>Server Components</h3>
+                <p>
+                  React Server
+                  Components等技术将重新定义前后端边界，优化首屏加载性能。
+                </p>
+                <h3>AI辅助开发</h3>
+                <p>
+                  AI工具如GitHub
+                  Copilot将成为开发者的得力助手，提高开发效率和代码质量。
+                </p>
+                <p>
+                  总之，2023年的前端开发领域充满活力和机遇。作为开发者，我们需要保持学习的热情，不断适应新技术和新趋势，才能在快速变化的环境中保持竞争力。
+                </p>
+              </div>
+              <!-- 文章标签 -->
+              <div class="mt-12 pt-6 border-t border-gray-100">
+                <h3 class="text-lg font-bold mb-4">文章标签</h3>
+                <div class="flex flex-wrap gap-2">
+                  <a
+                    href="javascript:void(0);"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+                  >
+                    #JavaScript
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+                  >
+                    #前端开发
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+                  >
+                    #技术趋势
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+                  >
+                    #React
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+                  >
+                    #Vue
+                  </a>
                 </div>
+              </div>
+              <!-- 文章底部操作 -->
+              <div
+                class="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4"
+              >
+                <button
+                  class="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-custom w-full sm:w-auto justify-center"
+                >
+                  <i class="far fa-thumbs-up text-gray-600"> </i>
+                  <span> 点赞 (128) </span>
+                </button>
+                <div
+                  class="flex space-x-3 w-full sm:w-auto justify-center sm:justify-end"
+                >
+                  <button
+                    class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="fab fa-twitter text-gray-600"> </i>
+                  </button>
+                  <button
+                    class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="fab fa-facebook-f text-gray-600"> </i>
+                  </button>
+                  <button
+                    class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="fab fa-linkedin-in text-gray-600"> </i>
+                  </button>
+                  <button
+                    class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="fas fa-link text-gray-600"> </i>
+                  </button>
+                </div>
+              </div>
             </div>
-
+          </article>
+          <!-- 作者信息卡片 -->
+          <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row items-center">
+              <img
+                src="https://design.gemcoder.com/staticResource/echoAiSystemImages/8a2ead0cdbc636f5b5819bd6b1064465.png"
+                alt="作者头像"
+                class="w-20 h-20 rounded-full object-cover mr-0 md:mr-6 mb-4 md:mb-0"
+              />
+              <div class="text-center md:text-left">
+                <h3 class="text-xl font-bold text-dark mb-1">张明</h3>
+                <p class="text-gray-600 mb-3">资深前端工程师 | 技术作家</p>
+                <p class="text-gray-600 mb-4 max-w-2xl">
+                  热衷于分享前端开发经验和技术趋势，曾任职于多家知名科技公司，拥有丰富的实战经验。
+                </p>
+                <div class="flex justify-center md:justify-start space-x-3">
+                  <a
+                    href="javascript:void(0);"
+                    class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-custom"
+                  >
+                    <i class="fab fa-twitter"> </i>
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-custom"
+                  >
+                    <i class="fab fa-github"> </i>
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-custom"
+                  >
+                    <i class="fab fa-linkedin"> </i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 评论区 -->
+          <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-dark mb-6">评论 (18)</h2>
+            <!-- 评论输入框 -->
+            <div class="mb-8">
+              <textarea
+                placeholder="分享你的想法..."
+                class="w-full p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom min-h-[120px] resize-none"
+              >
+              </textarea>
+              <div class="flex justify-end mt-4">
+                <button
+                  class="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-custom shadow-sm"
+                >
+                  发表评论
+                </button>
+              </div>
+            </div>
             <!-- 评论列表 -->
-            {{if .article.Comments}}
-            <div class="comments">
-                {{range .article.Comments}}
-                <div class="comment mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <strong>{{.UserName}}</strong>
-                                    {{if .Website}}
-                                    <small><a href="{{.Website}}" target="_blank">{{.Website}}</a></small>
-                                    {{end}}
-                                </div>
-                                <small class="text-muted">{{.CreatedAt.Format "2006-01-02 15:04"}}</small>
-                            </div>
-                            <div>{{.Content}}</div>
-                            
-                            <!-- 回复 -->
-                            {{if .Children}}
-                            <div class="replies mt-3 ms-4">
-                                {{range .Children}}
-                                <div class="reply card bg-light">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <strong>{{.UserName}}</strong>
-                                            <small class="text-muted">{{.CreatedAt.Format "2006-01-02 15:04"}}</small>
-                                        </div>
-                                        <div>{{.Content}}</div>
-                                    </div>
-                                </div>
-                                {{end}}
-                            </div>
-                            {{end}}
-                        </div>
+            <div class="space-y-6">
+              <!-- 评论 1 -->
+              <div class="flex gap-4">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/84b67973d4c7c47e1b1c80ef2ff3f27b.png"
+                  alt="评论者头像"
+                  class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                />
+                <div class="flex-1">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-bold text-dark">李工程师</h4>
+                      <span class="text-xs text-gray-500"> 2天前 </span>
                     </div>
+                    <p class="text-gray-700">
+                      非常全面的技术总结！我特别认同Vite作为构建工具的崛起，它确实极大地提升了开发体验。不过我对Turbopack的未来更感兴趣，期待看到它的表现。
+                    </p>
+                  </div>
+                  <div class="flex items-center mt-2 ml-2">
+                    <button
+                      class="text-sm text-gray-500 hover:text-primary transition-custom flex items-center"
+                    >
+                      <i class="far fa-thumbs-up mr-1"> </i>
+                      24
+                    </button>
+                    <button
+                      class="text-sm text-gray-500 hover:text-primary transition-custom ml-4 flex items-center"
+                    >
+                      <i class="far fa-comment mr-1"> </i>
+                      回复
+                    </button>
+                  </div>
+                  <!-- 回复 -->
+                  <div class="mt-4 ml-6 flex gap-3">
+                    <img
+                      src="https://design.gemcoder.com/staticResource/echoAiSystemImages/866e3bde861a3d9ef5b4ee44194640d4.png"
+                      alt="回复者头像"
+                      class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div class="flex-1">
+                      <div class="bg-gray-50 p-3 rounded-lg">
+                        <div class="flex justify-between items-start mb-1">
+                          <h4 class="font-bold text-dark text-sm">
+                            张明
+                            <span class="text-xs font-normal text-gray-500">
+                              作者
+                            </span>
+                          </h4>
+                          <span class="text-xs text-gray-500"> 1天前 </span>
+                        </div>
+                        <p class="text-gray-700 text-sm">
+                          感谢您的评论！Turbopack确实很有潜力，但目前还处于早期阶段。我会持续关注并在未来的文章中分享我的使用体验。
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                {{end}}
+              </div>
+              <!-- 评论 2 -->
+              <div class="flex gap-4">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/97fb3d7d1e2ef8a054ccf7e090b333b4.png"
+                  alt="评论者头像"
+                  class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                />
+                <div class="flex-1">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-bold text-dark">王设计师</h4>
+                      <span class="text-xs text-gray-500"> 3天前 </span>
+                    </div>
+                    <p class="text-gray-700">
+                      作为一名UI设计师，我对前端技术栈的变化也很感兴趣。请问您觉得Tailwind
+                      CSS在大型项目中维护起来会有困难吗？我看到很多开发者担心类名过多导致维护问题。
+                    </p>
+                  </div>
+                  <div class="flex items-center mt-2 ml-2">
+                    <button
+                      class="text-sm text-gray-500 hover:text-primary transition-custom flex items-center"
+                    >
+                      <i class="far fa-thumbs-up mr-1"> </i>
+                      18
+                    </button>
+                    <button
+                      class="text-sm text-gray-500 hover:text-primary transition-custom ml-4 flex items-center"
+                    >
+                      <i class="far fa-comment mr-1"> </i>
+                      回复
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- 评论 3 -->
+              <div class="flex gap-4">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/dbdaad0de5d520df7b41f4e19672ca5f.png"
+                  alt="评论者头像"
+                  class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                />
+                <div class="flex-1">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-bold text-dark">前端初学者</h4>
+                      <span class="text-xs text-gray-500"> 1周前 </span>
+                    </div>
+                    <p class="text-gray-700">
+                      对于刚入门的前端开发者，您有什么学习路径的建议吗？面对这么多技术，感觉有点无从下手。
+                    </p>
+                  </div>
+                  <div class="flex items-center mt-2 ml-2">
+                    <button
+                      class="text-sm text-gray-500 hover:text-primary transition-custom flex items-center"
+                    >
+                      <i class="far fa-thumbs-up mr-1"> </i>
+                      32
+                    </button>
+                    <button
+                      class="text-sm text-gray-500 hover:text-primary transition-custom ml-4 flex items-center"
+                    >
+                      <i class="far fa-comment mr-1"> </i>
+                      回复
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            {{else}}
-            <div class="alert alert-info">暂无评论，快来抢沙发吧！</div>
-            {{end}}
+            <!-- 加载更多评论 -->
+            <div class="mt-8 text-center">
+              <button
+                class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-custom"
+              >
+                查看更多评论
+              </button>
+            </div>
+          </div>
+          <!-- 相关文章 -->
+          <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-2xl font-bold text-dark mb-6">相关推荐</h2>
+            <div class="space-y-4">
+              <a href="javascript:void(0);" class="flex gap-4 group">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/a099aedecbe57d8d4afbfb0bb13271f3.png"
+                  alt="相关文章图片"
+                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                />
+                <div>
+                  <h4
+                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                  >
+                    JavaScript异步编程完全指南：从回调到Async/Await
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <i class="far fa-clock mr-1"> </i>
+                    2023-05-15
+                  </p>
+                </div>
+              </a>
+              <a href="javascript:void(0);" class="flex gap-4 group">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/e3fd4aaf87c3c332da7b57b10fece412.png"
+                  alt="相关文章图片"
+                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                />
+                <div>
+                  <h4
+                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                  >
+                    掌握Tailwind CSS：构建现代响应式界面的实用技巧
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <i class="far fa-clock mr-1"> </i>
+                    2023-05-10
+                  </p>
+                </div>
+              </a>
+              <a href="javascript:void(0);" class="flex gap-4 group">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/2aa704af9a59ba6d0b55b2520985922f.png"
+                  alt="相关文章图片"
+                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                />
+                <div>
+                  <h4
+                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                  >
+                    ECharts完全指南：从入门到精通
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <i class="far fa-clock mr-1"> </i>
+                    2023-06-05
+                  </p>
+                </div>
+              </a>
+            </div>
+          </div>
         </div>
-        {{else}}
-        <div class="alert alert-warning mt-4">
-            该文章已关闭评论功能
+        <!-- 侧边栏 -->
+        <div class="lg:w-1/3 space-y-8">
+          <!-- 搜索框 -->
+          <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="relative">
+              <input
+                type="text"
+                placeholder="搜索文章..."
+                class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+              />
+              <i
+                class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              >
+              </i>
+            </div>
+          </div>
+          <!-- 作者信息 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="relative h-32">
+              <img
+                src="https://design.gemcoder.com/staticResource/echoAiSystemImages/29f9df7400657d0e378595aa2d237f51.png"
+                alt="作者封面"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="px-6 pb-6">
+              <div class="flex justify-center -mt-16 mb-4">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/8a2ead0cdbc636f5b5819bd6b1064465.png"
+                  alt="作者头像"
+                  class="w-32 h-32 rounded-full border-4 border-white object-cover"
+                />
+              </div>
+              <div class="text-center">
+                <h3 class="text-xl font-bold text-dark mb-1">张明</h3>
+                <p class="text-gray-600 mb-4">资深前端工程师 | 技术作家</p>
+                <p class="text-gray-600 text-sm mb-4">
+                  热衷于分享前端开发经验和技术趋势，曾任职于多家知名科技公司，拥有丰富的实战经验。
+                </p>
+                <div class="flex justify-center space-x-4">
+                  <a
+                    href="javascript:void(0);"
+                    class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 hover:bg-blue-200 transition-custom"
+                  >
+                    <i class="fab fa-twitter"> </i>
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-custom"
+                  >
+                    <i class="fab fa-github"> </i>
+                  </a>
+                  <a
+                    href="javascript:void(0);"
+                    class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700 transition-custom"
+                  >
+                    <i class="fab fa-linkedin"> </i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 热门标签 -->
+          <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-xl font-bold text-dark mb-6">热门标签</h3>
+            <div class="flex flex-wrap gap-2">
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #JavaScript
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #React
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #TailwindCSS
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #UI设计
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #前端开发
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #用户体验
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #ECharts
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
+              >
+                #Web性能
+              </a>
+            </div>
+          </div>
+          <!-- 推荐阅读 -->
+          <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-xl font-bold text-dark mb-6">推荐阅读</h3>
+            <div class="space-y-4">
+              <a href="javascript:void(0);" class="flex gap-4 group">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/a099aedecbe57d8d4afbfb0bb13271f3.png"
+                  alt="推荐文章图片"
+                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                />
+                <div>
+                  <h4
+                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                  >
+                    JavaScript异步编程完全指南：从回调到Async/Await
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">2023-05-15</p>
+                </div>
+              </a>
+              <a href="javascript:void(0);" class="flex gap-4 group">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/e3fd4aaf87c3c332da7b57b10fece412.png"
+                  alt="推荐文章图片"
+                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                />
+                <div>
+                  <h4
+                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                  >
+                    掌握Tailwind CSS：构建现代响应式界面的实用技巧
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">2023-05-10</p>
+                </div>
+              </a>
+              <a href="javascript:void(0);" class="flex gap-4 group">
+                <img
+                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/0fa649efde54304251f1da9aa835023a.png"
+                  alt="推荐文章图片"
+                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                />
+                <div>
+                  <h4
+                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                  >
+                    提升网站性能的10个实用优化策略
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">2023-05-05</p>
+                </div>
+              </a>
+            </div>
+          </div>
         </div>
-        {{end}}
-    </div>
+      </div>
+    </main>
+    <!-- 订阅区域 -->
+    <section class="bg-gradient-to-r from-primary to-primary/80 mt-20 py-16">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center">
+          <h2 class="text-3xl font-bold text-white mb-4">订阅我的博客</h2>
+          <p class="text-white/90 text-lg mb-8">
+            获取最新文章和独家内容，直接发送到您的邮箱
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+            <input
+              type="email"
+              placeholder="您的邮箱地址"
+              class="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-custom"
+            />
+            <button
+              class="px-6 py-3 bg-white text-primary font-medium rounded-lg hover:bg-gray-100 transition-custom shadow-lg"
+            >
+              订阅
+            </button>
+          </div>
+          <p class="text-white/70 text-sm mt-4">
+            我们尊重您的隐私，不会向第三方分享您的信息
+          </p>
+        </div>
+      </div>
+    </section>
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white pt-16 pb-8">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+          <div>
+            <h3 class="text-xl font-bold mb-4">
+              Vibe
+              <span class="text-accent"> Blog </span>
+            </h3>
+            <p class="text-gray-400 mb-6">
+              分享创意与灵感的个人博客空间，探索技术、设计与生活的精彩内容。
+            </p>
+            <div class="flex space-x-4">
+              <a
+                href="javascript:void(0);"
+                class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-custom"
+              >
+                <i class="fab fa-twitter"> </i>
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-custom"
+              >
+                <i class="fab fa-instagram"> </i>
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-custom"
+              >
+                <i class="fab fa-github"> </i>
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-custom"
+              >
+                <i class="fab fa-linkedin"> </i>
+              </a>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  首页
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  关于我
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  文章归档
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  分类目录
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  联系我
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-lg font-semibold mb-4">热门分类</h4>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  Web开发
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  UI/UX设计
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  数据可视化
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  生活方式
+                </a>
+              </li>
+              <li>
+                <a
+                  href="javascript:void(0);"
+                  class="text-gray-400 hover:text-white transition-custom"
+                >
+                  创意灵感
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-lg font-semibold mb-4">联系信息</h4>
+            <ul class="space-y-3">
+              <li class="flex items-start">
+                <i class="fas fa-envelope text-accent mt-1 mr-3"> </i>
+                <span class="text-gray-400"> contact@vibeblog.com </span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-map-marker-alt text-accent mt-1 mr-3"> </i>
+                <span class="text-gray-400">
+                  北京市朝阳区创意园区A座101室
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="border-t border-gray-800 pt-8">
+          <div class="flex flex-col md:flex-row justify-between items-center">
+            <p class="text-gray-500 text-sm mb-4 md:mb-0">
+              © 2023 VibeBlog. 保留所有权利。
+            </p>
+            <div class="flex space-x-6">
+              <a
+                href="javascript:void(0);"
+                class="text-gray-500 text-sm hover:text-gray-300 transition-custom"
+              >
+                隐私政策
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="text-gray-500 text-sm hover:text-gray-300 transition-custom"
+              >
+                使用条款
+              </a>
+              <a
+                href="javascript:void(0);"
+                class="text-gray-500 text-sm hover:text-gray-300 transition-custom"
+              >
+                Cookie政策
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- 返回顶部按钮 -->
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-primary/90"
+    >
+      <i class="fas fa-arrow-up"> </i>
+    </button>
+    <!-- JavaScript -->
+    <script>
+      // 页面加载时初始化
+              document.addEventListener('DOMContentLoaded', () => {
+                  // 移动端菜单切换
+                  const mobileMenuButton = document.getElementById('mobile-menu-button');
+                  const mobileMenu = document.getElementById('mobile-menu');
 
-    <div class="col-lg-4">
-        <!-- 回到首页 -->
-        <div class="card mb-4">
-            <div class="card-body text-center">
-                <a href="/" class="btn btn-primary">← 返回首页</a>
-            </div>
-        </div>
-    </div>
-</div>
-{{end}}
+                  mobileMenuButton.addEventListener('click', () => {
+                      mobileMenu.classList.toggle('hidden');
+                  });
+
+                  // 返回顶部按钮
+                  const backToTopButton = document.getElementById('back-to-top');
+
+                  window.addEventListener('scroll', () => {
+                      if (window.pageYOffset > 300) {
+                          backToTopButton.classList.remove('opacity-0', 'invisible');
+                          backToTopButton.classList.add('opacity-100', 'visible');
+                      } else {
+                          backToTopButton.classList.remove('opacity-100', 'visible');
+                          backToTopButton.classList.add('opacity-0', 'invisible');
+                      }
+                  });
+
+                  backToTopButton.addEventListener('click', () => {
+                      window.scrollTo({
+                          top: 0,
+                          behavior: 'smooth'
+                      });
+                  });
+
+                  // 导航栏滚动效果
+                  const header = document.querySelector('header');
+                  let lastScrollTop = 0;
+
+                  window.addEventListener('scroll', () => {
+                      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                      if (scrollTop > 50) {
+                          header.classList.add('shadow-md');
+                          header.classList.remove('shadow-sm');
+                      } else {
+                          header.classList.remove('shadow-md');
+                          header.classList.add('shadow-sm');
+                      }
+
+                      lastScrollTop = scrollTop;
+                  });
+
+                  // 平滑滚动到锚点
+                  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                      anchor.addEventListener('click', function(e) {
+                          e.preventDefault();
+                          const targetId = this.getAttribute('href');
+                          if (targetId === '#') return;
+
+                          const targetElement = document.querySelector(targetId);
+                          if (targetElement) {
+                              targetElement.scrollIntoView({
+                                  behavior: 'smooth'
+                              });
+                          }
+                      });
+                  });
+
+                  // 评论区交互
+                  const commentButtons = document.querySelectorAll('.far.fa-comment');
+                  commentButtons.forEach(button => {
+                      button.addEventListener('click', function() {
+                          const textarea = document.querySelector('textarea[placeholder="分享你的想法..."]');
+                          if (textarea) {
+                              textarea.focus();
+                              // 这里可以添加回复@用户的逻辑
+                          }
+                      });
+                  });
+              });
+    </script>
+  </body>
+</html>
+{{ end }}

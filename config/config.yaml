@@ -30,12 +30,12 @@ log:
 storage:
   type: "local"
   local:
-    base_path: "./uploads"
+    base_path: "./web/uploads"
     base_url: "http://localhost:8080/uploads/"
 
 theme:
   current: "default"
-  path: "./templates"
+  path: "./web/templates"
 
 cors:
   allowed_origins: "http://localhost:3000,http://localhost:8080"

@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"matuto-blog/config"
 	"matuto-blog/internal/api/controllers"
 	"matuto-blog/internal/api/middleware"
 	"matuto-blog/pkg/utils"
@@ -15,13 +16,21 @@ func InitRoutes() *gin.Engine {
 	r.Use(middleware.Logger())
 	r.Use(middleware.CORS())
 
-	// 设置模板路径 - 加载所有HTML文件
-	//r.LoadHTMLGlob("web/templates/*")
-	// 如果有子目录，也可以用这种方式
-	r.HTMLRender = utils.LoadTemplateFiles("web", ".html")
+	// 设置模板路径 - 根据主题配置加载模板
+	themePath := config.GetString("theme.path")
+	templateNames := []string{
+		"default",
+		"theme2",
+	}
+	//r.HTMLRender = utils.LoadThemeTemplateFiles(themePath, ".html")
+	customFuncs := utils.GenTemplateFuncMap()
+
+	tplManager := utils.NewTemplateManager(themePath, templateNames)
+	tplManager.LoadTemplates(r, customFuncs)
+
 	// 静态文件
-	r.Static("/static", "web/static")
-	r.Static("/uploads", "./uploads")
+	r.Static("/static", "./web/static")
+	r.Static("/uploads", "./web/uploads")
 
 	// 初始化控制器
 	authController := &controllers.AuthController{}
@@ -36,6 +45,12 @@ func InitRoutes() *gin.Engine {
 	{
 		// 首页
 		frontend.GET("", articleController.Index)
+
+		frontend.GET("/test", func(c *gin.Context) {
+			c.HTML(200, "default/test/test.html", gin.H{
+				"title": "博客首页",
+			})
+		})
 
 		// 文章详情
 		frontend.GET("/article/:id", articleController.Show)
