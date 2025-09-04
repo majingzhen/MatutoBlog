@@ -45,14 +45,29 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Bell, User, Setting } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
-// 当前页面名称
-const currentPage = ref('首页')
 const router = useRouter()
+const route = useRoute()
+
+// 页面名称映射
+const pageNameMap = {
+  '/': '首页',
+  '/publish': '发布文章',
+  '/user/list': '用户列表',
+  '/user/add': '新增用户',
+  '/role': '角色管理',
+  '/menu': '菜单管理',
+  '/settings': '系统设置'
+}
+
+// 当前页面名称
+const currentPage = computed(() => {
+  return pageNameMap[route.path] || '未知页面'
+})
 
 // 退出登录逻辑
 const handleLogout = () => {

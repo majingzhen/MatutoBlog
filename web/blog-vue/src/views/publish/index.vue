@@ -212,10 +212,6 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElDialog, ElInput, ElButton } from 'element-plus'
-import { 
-  Folder, Tags, Search, Upload, Save, 
-  MagicStick, Brush, ArrowLeft 
-} from '@element-plus/icons-vue'
 
 // 引入markdown渲染库（实际项目中需要安装：npm install marked highlight.js）
 import { marked } from 'marked'
