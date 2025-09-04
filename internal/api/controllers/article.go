@@ -96,7 +96,7 @@ func (a *ArticleController) Index(c *gin.Context) {
 func (a *ArticleController) Show(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.HTML(http.StatusNotFound, "error/404.html", gin.H{
+		c.HTML(http.StatusNotFound, "error/error.html", gin.H{
 			"message": "文章不存在",
 		})
 		return
@@ -113,7 +113,7 @@ func (a *ArticleController) Show(c *gin.Context) {
 		}).
 		Where("id = ? AND status = ?", id, 1).
 		First(&article).Error; err != nil {
-		c.HTML(http.StatusNotFound, "error/404.html", gin.H{
+		c.HTML(http.StatusNotFound, "error/error.html", gin.H{
 			"message": "文章不存在",
 		})
 		return
@@ -239,7 +239,7 @@ func (a *ArticleController) AdminStore(c *gin.Context) {
 func (a *ArticleController) AdminEdit(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.HTML(http.StatusNotFound, "admin/error/404.html", gin.H{
+		c.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
 			"message": "文章不存在",
 		})
 		return
@@ -247,7 +247,7 @@ func (a *ArticleController) AdminEdit(c *gin.Context) {
 
 	var article models.Article
 	if err := database.DB.Preload("Tags").First(&article, id).Error; err != nil {
-		c.HTML(http.StatusNotFound, "admin/error/404.html", gin.H{
+		c.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
 			"message": "文章不存在",
 		})
 		return

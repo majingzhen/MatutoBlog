@@ -83,7 +83,7 @@ func (tm *TemplateManager) LoadTemplates(r *gin.Engine, funcs template.FuncMap) 
 				fmt.Printf("找到HTML模板文件：%s\n", filePath)
 
 				// 计算模板名称（相对于根目录的相对路径，避免重复）
-				// 例如："templates/default/layout/header.html" → "default/layout/header.html"
+				// 例如："templates/default/components/header.html" → "default/components/header.html"
 				relPath, err := filepath.Rel(tm.templateDir, filePath)
 				if err != nil {
 					fmt.Printf("计算相对路径失败：%s（文件路径：%s）\n", err.Error(), filePath)

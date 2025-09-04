@@ -1,0 +1,135 @@
+{{ define "default/components/header.html" }}
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{if .title}}{{.title}}{{else}}简约活力博客{{end}}</title>
+    <script src="https://res.gemcoder.com/js/reload.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+            href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            rel="stylesheet"
+    />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-light text-dark font-sans antialiased">
+<header
+        class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm transition-custom"
+>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16 md:h-20">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="/" class="flex items-center">
+              <span class="text-primary text-2xl font-bold">
+                Vibe
+                <span class="text-accent"> Blog </span>
+              </span>
+                </a>
+            </div>
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex space-x-8">
+                <a
+                        href="/"
+                        class="text-dark hover:text-primary font-medium transition-custom"
+                >
+                    首页
+                </a>
+                <a
+                        href="/categories"
+                        class="text-dark hover:text-primary font-medium transition-custom"
+                >
+                    分类
+                </a>
+                <a
+                        href="/hot"
+                        class="text-dark hover:text-primary font-medium transition-custom"
+                >
+                    热门
+                </a>
+                <a
+                        href="/about"
+                        class="text-dark hover:text-primary font-medium transition-custom"
+                >
+                    关于
+                </a>
+            </nav>
+            <!-- 搜索和菜单按钮 -->
+            <div class="flex items-center space-x-4">
+                <button
+                        class="p-2 rounded-full hover:bg-gray-100 transition-custom"
+                >
+                    <i class="fas fa-search text-gray-600"> </i>
+                </button>
+                <button
+                        class="p-2 rounded-full hover:bg-gray-100 transition-custom md:hidden"
+                        id="mobile-menu-button"
+                >
+                    <i class="fas fa-bars text-gray-600"> </i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- 移动端导航菜单 -->
+    <div class="md:hidden hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a
+                    href="/"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+            >
+                首页
+            </a>
+            <a
+                    href="/categories"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+            >
+                分类
+            </a>
+            <a
+                    href="/hot"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+            >
+                热门
+            </a>
+            <a
+                    href="/about"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-primary hover:text-white transition-custom"
+            >
+                关于
+            </a>
+        </div>
+    </div>
+</header>
+</body>
+</html>
+{{ end }}

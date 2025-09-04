@@ -92,7 +92,7 @@ func (c *CategoryController) AdminStore(ctx *gin.Context) {
 func (c *CategoryController) AdminEdit(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.HTML(http.StatusNotFound, "admin/error/404.html", gin.H{
+		ctx.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
 			"message": "分类不存在",
 		})
 		return
@@ -100,7 +100,7 @@ func (c *CategoryController) AdminEdit(ctx *gin.Context) {
 
 	var category models.Category
 	if err := database.DB.First(&category, id).Error; err != nil {
-		ctx.HTML(http.StatusNotFound, "admin/error/404.html", gin.H{
+		ctx.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
 			"message": "分类不存在",
 		})
 		return
@@ -323,7 +323,7 @@ func (t *TagController) AdminStore(ctx *gin.Context) {
 func (t *TagController) AdminEdit(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.HTML(http.StatusNotFound, "admin/error/404.html", gin.H{
+		ctx.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
 			"message": "标签不存在",
 		})
 		return
@@ -331,7 +331,7 @@ func (t *TagController) AdminEdit(ctx *gin.Context) {
 
 	var tag models.Tag
 	if err := database.DB.First(&tag, id).Error; err != nil {
-		ctx.HTML(http.StatusNotFound, "admin/error/404.html", gin.H{
+		ctx.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
 			"message": "标签不存在",
 		})
 		return
