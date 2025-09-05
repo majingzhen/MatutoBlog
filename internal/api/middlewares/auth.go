@@ -3,7 +3,7 @@ package middlewares
 import (
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
-	"net/http"
+	"matuto-blog/pkg/common"
 	"strings"
 	"time"
 
@@ -62,10 +62,7 @@ func JWTAuth() gin.HandlerFunc {
 		// 从请求头获取token
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 401,
-				"msg":  "未提供认证令牌",
-			})
+			common.Unauthorized(c, "未提供认证令牌")
 			c.Abort()
 			return
 		}
@@ -73,10 +70,7 @@ func JWTAuth() gin.HandlerFunc {
 		// 解析Bearer token
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 401,
-				"msg":  "认证令牌格式错误",
-			})
+			common.Unauthorized(c, "认证令牌格式错误")
 			c.Abort()
 			return
 		}
@@ -84,10 +78,7 @@ func JWTAuth() gin.HandlerFunc {
 		// 解析token
 		claims, err := ParseToken(parts[1])
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 401,
-				"msg":  "认证令牌无效",
-			})
+			common.Unauthorized(c, "认证令牌无效")
 			c.Abort()
 			return
 		}
@@ -95,20 +86,14 @@ func JWTAuth() gin.HandlerFunc {
 		// 验证用户是否存在
 		var user models.User
 		if err := database.DB.First(&user, claims.UserID).Error; err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 401,
-				"msg":  "用户不存在",
-			})
+			common.Unauthorized(c, "用户不存在")
 			c.Abort()
 			return
 		}
 
 		// 检查用户状态
 		if user.Status != 1 {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": 401,
-				"msg":  "用户已被禁用",
-			})
+			common.Unauthorized(c, "用户已被禁用")
 			c.Abort()
 			return
 		}

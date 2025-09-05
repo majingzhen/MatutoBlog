@@ -5,6 +5,7 @@ import (
 	"io"
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
+	"matuto-blog/pkg/common"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,15 +20,45 @@ import (
 // AttachmentController 附件控制器
 type AttachmentController struct{}
 
+type AttachPageRequest struct {
+	common.PageRequest
+	Title string `json:"title" form:"title"`
+}
+
+// AttachPage 附件列表
+func (r *AttachmentController) AttachPage(ctx *gin.Context) {
+	var req AttachPageRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		common.BadRequest(ctx, "参数错误: "+err.Error())
+		return
+	}
+
+	var attachments []models.Attach
+	var total int64
+
+	query := database.DB.Model(&models.Attach{})
+
+	if req.Title != "" {
+		query = query.Where("title LIKE ?", "%"+req.Title+"%")
+	}
+
+	query.Count(&total)
+
+	offset := (req.Page - 1) * req.PageSize
+	query.Order("created_at DESC").
+		Limit(req.PageSize).
+		Offset(offset).
+		Find(&attachments)
+
+	common.SuccessPage(ctx, attachments, total, req.Page, req.PageSize)
+}
+
 // Upload 文件上传
 func (a *AttachmentController) Upload(ctx *gin.Context) {
 	// 获取上传的文件
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "请选择要上传的文件",
-		})
+		common.ServerError(ctx, "请选择要上传的文件")
 		return
 	}
 
@@ -37,10 +68,7 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 		maxSize = 10 * 1024 * 1024 // 默认10MB
 	}
 	if file.Size > maxSize {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  fmt.Sprintf("文件大小超过限制 (最大 %d MB)", maxSize/(1024*1024)),
-		})
+		common.ServerError(ctx, "文件大小超过限制")
 		return
 	}
 
@@ -55,10 +83,7 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 		}
 	}
 	if !allowed {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "不支持的文件类型",
-		})
+		common.ServerError(ctx, "不支持的文件类型")
 		return
 	}
 
@@ -70,14 +95,11 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 
 	// 按年月分目录
 	now := time.Now()
-	datePath := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
+	datePath := fmt.Sprintf("%d-%02d-%02d", now.Year(), now.Month(), now.Day())
 	fullPath := filepath.Join(uploadPath, datePath)
 
 	if err := os.MkdirAll(fullPath, 0755); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "创建上传目录失败",
-		})
+		common.ServerError(ctx, "创建上传目录失败")
 		return
 	}
 
@@ -87,10 +109,7 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 
 	// 保存文件
 	if err := ctx.SaveUploadedFile(file, filePath); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "保存文件失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "保存文件失败: "+err.Error())
 		return
 	}
 
@@ -98,10 +117,7 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 	src, err := file.Open()
 	if err != nil {
 		os.Remove(filePath) // 删除已保存的文件
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "读取文件失败",
-		})
+		common.ServerError(ctx, "读取文件失败: "+err.Error())
 		return
 	}
 	defer src.Close()
@@ -110,10 +126,7 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 	_, err = src.Read(buffer)
 	if err != nil && err != io.EOF {
 		os.Remove(filePath)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "读取文件内容失败",
-		})
+		common.ServerError(ctx, "读取文件失败: "+err.Error())
 		return
 	}
 
@@ -125,10 +138,7 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 
 	if err := database.DB.Create(&attachment).Error; err != nil {
 		os.Remove(filePath) // 删除已保存的文件
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "保存文件记录失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "保存文件记录失败: "+err.Error())
 		return
 	}
 
@@ -139,14 +149,10 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 	}
 	fileURL := baseURL + attachment.Path
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "文件上传成功",
-		"data": gin.H{
-			"id":   attachment.Id,
-			"name": attachment.Name,
-			"url":  fileURL,
-		},
+	common.SuccessWithMessage(ctx, "文件上传成功", gin.H{
+		"id":   attachment.Id,
+		"name": attachment.Name,
+		"url":  fileURL,
 	})
 }
 

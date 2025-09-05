@@ -193,66 +193,6 @@ func (a *ArticleController) Show(c *gin.Context) {
 	})
 }
 
-// AdminIndex 管理后台文章列表
-func (a *ArticleController) AdminIndex(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize := 15
-	status := c.Query("status")
-	keyword := strings.TrimSpace(c.Query("keyword"))
-
-	var articles []models.Article
-	var total int64
-
-	query := database.DB.Model(&models.Article{}).Preload("Category")
-
-	if status != "" {
-		s, _ := strconv.Atoi(status)
-		query = query.Where("status = ?", s)
-	}
-
-	if keyword != "" {
-		query = query.Where("title LIKE ?", "%"+keyword+"%")
-	}
-
-	query.Count(&total)
-
-	offset := (page - 1) * pageSize
-	query.Order("created_at DESC").
-		Limit(pageSize).
-		Offset(offset).
-		Find(&articles)
-
-	c.HTML(http.StatusOK, "admin/articles/index.html", gin.H{
-		"articles": articles,
-		"pagination": gin.H{
-			"page":      page,
-			"page_size": pageSize,
-			"total":     total,
-			"pages":     (int(total) + pageSize - 1) / pageSize,
-		},
-		"current_status": status,
-		"keyword":        keyword,
-		"title":          "文章管理",
-	})
-}
-
-// AdminCreate 创建文章页面
-func (a *ArticleController) AdminCreate(c *gin.Context) {
-	// 获取分类列表
-	var categories []models.Category
-	database.DB.Where("status = ?", 1).Order("sort ASC").Find(&categories)
-
-	// 获取标签列表
-	var tags []models.Tag
-	database.DB.Where("status = ?", 1).Order("sort ASC").Find(&tags)
-
-	c.HTML(http.StatusOK, "admin/articles/create.html", gin.H{
-		"categories": categories,
-		"tags":       tags,
-		"title":      "创建文章",
-	})
-}
-
 // AdminStore 保存文章
 func (a *ArticleController) AdminStore(c *gin.Context) {
 	var req ArticleRequest
@@ -296,47 +236,6 @@ func (a *ArticleController) AdminStore(c *gin.Context) {
 
 	common.Success(c, gin.H{
 		"id": article.Id,
-	})
-}
-
-// AdminEdit 编辑文章页面
-func (a *ArticleController) AdminEdit(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
-			"message": "文章不存在",
-		})
-		return
-	}
-
-	var article models.Article
-	if err := database.DB.Preload("Tags").First(&article, id).Error; err != nil {
-		c.HTML(http.StatusNotFound, "admin/error/error.html", gin.H{
-			"message": "文章不存在",
-		})
-		return
-	}
-
-	// 获取分类列表
-	var categories []models.Category
-	database.DB.Where("status = ?", 1).Order("sort ASC").Find(&categories)
-
-	// 获取标签列表
-	var tags []models.Tag
-	database.DB.Where("status = ?", 1).Order("sort ASC").Find(&tags)
-
-	// 获取文章已选标签ID
-	var selectedTagIDs []int
-	for _, tag := range article.Tags {
-		selectedTagIDs = append(selectedTagIDs, tag.Id)
-	}
-
-	c.HTML(http.StatusOK, "admin/articles/edit.html", gin.H{
-		"article":          article,
-		"categories":       categories,
-		"tags":             tags,
-		"selected_tag_ids": selectedTagIDs,
-		"title":            "编辑文章",
 	})
 }
 

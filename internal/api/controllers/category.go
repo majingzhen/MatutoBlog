@@ -3,6 +3,7 @@ package controllers
 import (
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
+	"matuto-blog/pkg/common"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,6 +22,75 @@ type CategoryRequest struct {
 	ParentID    uint   `json:"parent_id"`
 	Sort        int    `json:"sort"`
 	Status      int    `json:"status"`
+}
+
+// CategoryPageRequest 分类分页请求
+type CategoryPageRequest struct {
+	common.PageRequest
+	Name   string `json:"name" form:"name"`
+	Status *int   `json:"status" form:"status"`
+}
+
+// CategoryPage 分类分页
+func (c *CategoryController) CategoryPage(ctx *gin.Context) {
+	var req CategoryPageRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		common.ServerError(ctx, "参数错误: "+err.Error())
+		return
+	}
+
+	var categories []models.Category
+	var total int64
+
+	query := database.DB.Model(&models.Category{})
+
+	if req.Name != "" {
+		query = query.Where("name LIKE ?", "%"+req.Name+"%")
+	}
+
+	if req.Status != nil {
+		query = query.Where("status = ?", req.Status)
+	}
+
+	query.Count(&total)
+
+	offset := (req.Page - 1) * req.PageSize
+	query.Order("sort ASC, created_at DESC").
+		Limit(req.PageSize).
+		Offset(offset).
+		Find(&categories)
+	common.SuccessPage(ctx, categories, total, req.Page, req.PageSize)
+}
+
+// DeleteCategory 删除分类
+func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil {
+		common.ServerError(ctx, "无效的分类ID")
+		return
+	}
+
+	// 检查是否有子分类
+	var childCount int64
+	database.DB.Model(&models.Category{}).Where("parent_id = ?", id).Count(&childCount)
+	if childCount > 0 {
+		common.ServerError(ctx, "该分类下有子分类，无法删除")
+		return
+	}
+
+	// 检查是否有文章
+	var articleCount int64
+	database.DB.Model(&models.Article{}).Where("category_id = ?", id).Count(&articleCount)
+	if articleCount > 0 {
+		common.ServerError(ctx, "该分类下有文章，无法删除")
+		return
+	}
+
+	if err := database.DB.Delete(&models.Category{}, id).Error; err != nil {
+		common.ServerError(ctx, "删除分类失败: "+err.Error())
+		return
+	}
+	common.SuccessWithMessage(ctx, "分类删除成功", nil)
 }
 
 // AdminIndex 管理后台分类列表
@@ -176,53 +246,6 @@ func (c *CategoryController) AdminUpdate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "分类更新成功",
-	})
-}
-
-// AdminDestroy 删除分类
-func (c *CategoryController) AdminDestroy(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的分类ID",
-		})
-		return
-	}
-
-	// 检查是否有子分类
-	var childCount int64
-	database.DB.Model(&models.Category{}).Where("parent_id = ?", id).Count(&childCount)
-	if childCount > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "该分类下有子分类，无法删除",
-		})
-		return
-	}
-
-	// 检查是否有文章
-	var articleCount int64
-	database.DB.Model(&models.Article{}).Where("category_id = ?", id).Count(&articleCount)
-	if articleCount > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "该分类下有文章，无法删除",
-		})
-		return
-	}
-
-	if err := database.DB.Delete(&models.Category{}, id).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "删除分类失败: " + err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "分类删除成功",
 	})
 }
 
