@@ -33,8 +33,7 @@
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </template>
-        <el-menu-item index="/user/list" @click="handleMenuClick('/user/list')">用户列表</el-menu-item>
-        <el-menu-item index="/user/add" @click="handleMenuClick('/user/add')">新增用户</el-menu-item>
+        <el-menu-item index="/user" @click="handleMenuClick('/user')">用户列表</el-menu-item>
       </el-sub-menu>
 
       <!-- 角色管理 -->

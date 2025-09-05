@@ -149,7 +149,20 @@ func InitRoutes() *gin.Engine {
 		apiAuth := api.Group("", middlewares.JWTAuth())
 		{
 			apiAuth.GET("/profile", authController.GetProfile)
-
+			// 文章管理
+			articles := apiAuth.Group("/articles")
+			{
+				articles.GET("/page", articleController.ArticlePage)
+				articles.GET("", articleController.AdminIndex)
+				articles.GET("/", articleController.AdminIndex)
+				articles.GET("/create", articleController.AdminCreate)
+				articles.POST("/create", articleController.AdminStore)
+				articles.GET("/:id/edit", articleController.AdminEdit)
+				articles.PUT("/:id", articleController.AdminUpdate)
+				articles.POST("/:id", articleController.AdminUpdate) // 兼容表单提交
+				articles.DELETE("/:id", articleController.AdminDestroy)
+				articles.POST("/:id/delete", articleController.AdminDestroy) // 兼容表单提交
+			}
 		}
 
 	}

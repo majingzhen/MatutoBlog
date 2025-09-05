@@ -31,6 +31,54 @@ type ArticleRequest struct {
 	Status     int8   `json:"status"`
 }
 
+type ArticlePageRequest struct {
+	common.PageRequest
+	CategoryID uint   `json:"categoryId" form:"categoryId"`
+	Title      string `json:"title" form:"title"`
+	Status     *int8  `json:"status" form:"status"`
+}
+
+// ArticlePage 文章分页
+func (a *ArticleController) ArticlePage(c *gin.Context) {
+	var pageParam ArticlePageRequest
+	if err := c.ShouldBindQuery(&pageParam); err != nil {
+		common.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := pageParam.Validate(); err != nil {
+		common.BadRequest(c, err.Error())
+		return
+	}
+
+	var articles []models.Article
+	var total int64
+
+	query := database.DB.Model(&models.Article{})
+
+	if pageParam.Status != nil {
+		query = query.Where("status = ?", pageParam.Status)
+	}
+
+	if pageParam.CategoryID > 0 {
+		query = query.Where("category_id = ?", pageParam.CategoryID)
+	}
+
+	if pageParam.Title != "" {
+		query = query.Where("title LIKE ?", "%"+pageParam.Title+"%")
+	}
+
+	query.Count(&total)
+
+	offset := (pageParam.Page - 1) * pageParam.PageSize
+	query.Order("is_top DESC, created_at DESC").
+		Limit(pageParam.PageSize).
+		Offset(offset).
+		Find(&articles)
+
+	common.SuccessPage(c, articles, total, pageParam.Page, pageParam.PageSize)
+}
+
 // Index 文章列表页面
 func (a *ArticleController) Index(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))

@@ -34,12 +34,18 @@ const router = createRouter({
           name: 'Publish',
           component: () => import('@/views/publish/index.vue')
         },
-        // 用户列表
+          // 文章列表
         {
-          path: '/user/list',
-          name: 'UserList',
-          component: () => import('@/views/user/List.vue')
+          path: '/article',
+          name: 'ArticleList',
+          component: () => import('@/views/article/index.vue')
         },
+        // 用户列表
+        // {
+        //   path: '/user',
+        //   name: 'UserList',
+        //   component: () => import('@/views/user/index.vue')
+        // },
         // // 新增用户
         // {
         //   path: '/user/add',

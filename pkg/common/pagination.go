@@ -10,8 +10,8 @@ import (
 // PageRequest 分页请求参数
 // 用于处理分页查询的请求参数，支持页码和页大小的验证
 type PageRequest struct {
-	Page     int `json:"page" form:"page" binding:"min=1"`                   // 页码，从1开始
-	PageSize int `json:"page_size" form:"page_size" binding:"min=1,max=100"` // 页大小，最大100
+	Page     int `json:"page" form:"page" binding:"min=1"`                 // 页码，从1开始
+	PageSize int `json:"pageSize" form:"pageSize" binding:"min=1,max=100"` // 页大小，最大100
 }
 
 // DefaultPageRequest 默认分页参数
