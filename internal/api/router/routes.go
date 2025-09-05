@@ -81,8 +81,6 @@ func InitRoutes() *gin.Engine {
 			articles.GET("/:id/edit", articleController.AdminEdit)
 			articles.PUT("/:id", articleController.AdminUpdate)
 			articles.POST("/:id", articleController.AdminUpdate) // 兼容表单提交
-			articles.DELETE("/:id", articleController.AdminDestroy)
-			articles.POST("/:id/delete", articleController.AdminDestroy) // 兼容表单提交
 		}
 
 		// 分类管理
@@ -153,6 +151,7 @@ func InitRoutes() *gin.Engine {
 			articles := apiAuth.Group("/articles")
 			{
 				articles.GET("/page", articleController.ArticlePage)
+				articles.DELETE("/:id", articleController.DeleteArticle)
 				articles.GET("", articleController.AdminIndex)
 				articles.GET("/", articleController.AdminIndex)
 				articles.GET("/create", articleController.AdminCreate)
@@ -160,8 +159,7 @@ func InitRoutes() *gin.Engine {
 				articles.GET("/:id/edit", articleController.AdminEdit)
 				articles.PUT("/:id", articleController.AdminUpdate)
 				articles.POST("/:id", articleController.AdminUpdate) // 兼容表单提交
-				articles.DELETE("/:id", articleController.AdminDestroy)
-				articles.POST("/:id/delete", articleController.AdminDestroy) // 兼容表单提交
+
 			}
 		}
 

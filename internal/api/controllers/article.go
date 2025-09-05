@@ -79,6 +79,22 @@ func (a *ArticleController) ArticlePage(c *gin.Context) {
 	common.SuccessPage(c, articles, total, pageParam.Page, pageParam.PageSize)
 }
 
+// DeleteArticle 删除文章
+func (a *ArticleController) DeleteArticle(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		common.BadRequest(c, "无效的文章ID")
+		return
+	}
+
+	if err := database.DB.Delete(&models.Article{}, id).Error; err != nil {
+		common.ServerError(c, "删除文章失败: "+err.Error())
+		return
+	}
+
+	common.SuccessWithMessage(c, "文章删除成功", nil)
+}
+
 // Index 文章列表页面
 func (a *ArticleController) Index(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -377,22 +393,6 @@ func (a *ArticleController) AdminUpdate(c *gin.Context) {
 	database.DB.Model(&article).Association("Tags").Replace(tags)
 
 	common.SuccessWithMessage(c, "文章更新成功", nil)
-}
-
-// AdminDestroy 删除文章
-func (a *ArticleController) AdminDestroy(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		common.BadRequest(c, "无效的文章ID")
-		return
-	}
-
-	if err := database.DB.Delete(&models.Article{}, id).Error; err != nil {
-		common.ServerError(c, "删除文章失败: "+err.Error())
-		return
-	}
-
-	common.SuccessWithMessage(c, "文章删除成功", nil)
 }
 
 // generateSlug 生成文章slug

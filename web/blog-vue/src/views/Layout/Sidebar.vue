@@ -27,6 +27,16 @@
         <template #title>发布文章</template>
       </el-menu-item>
 
+      <!-- 文章管理（带子菜单） -->
+      <el-sub-menu index="article">
+        <template #title>
+          <el-icon><Document /></el-icon>
+          <span>文章管理</span>
+        </template>
+        <el-menu-item index="/article" @click="handleMenuClick('/article')">文章列表</el-menu-item>
+        <el-menu-item index="/publish" @click="handleMenuClick('/publish')">发布文章</el-menu-item>
+      </el-sub-menu>
+
       <!-- 用户管理（带子菜单） -->
       <el-sub-menu index="user">
         <template #title>
@@ -61,7 +71,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 // 引入 Element Plus 图标
-import { HomeFilled, User, UserFilled, Menu, Setting, Edit } from '@element-plus/icons-vue'
+import { HomeFilled, User, UserFilled, Menu, Setting, Edit, Document } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()

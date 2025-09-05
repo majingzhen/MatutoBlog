@@ -3,6 +3,7 @@
     <!-- 面包屑导航 -->
     <el-breadcrumb separator="/" :style="{ marginLeft: '20px' }">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item v-if="currentPage !== '首页'">{{ currentPage }}</el-breadcrumb-item>
     </el-breadcrumb>
 
     <!-- 右侧：用户信息和操作 -->
@@ -49,6 +50,22 @@ const route = useRoute()
 
 const loginUser = computed(() => {
   return JSON.parse(localStorage.getItem('login_user'))
+})
+
+// 页面名称映射
+const pageNameMap = {
+  '/': '首页',
+  '/publish': '发布文章',
+  '/article': '文章列表',
+  '/user': '用户列表',
+  '/role': '角色管理',
+  '/menu': '菜单管理',
+  '/settings': '系统设置'
+}
+
+// 当前页面名称
+const currentPage = computed(() => {
+  return pageNameMap[route.path] || '首页'
 })
 
 // 退出登录逻辑
