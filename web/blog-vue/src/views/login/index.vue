@@ -26,9 +26,9 @@
               ref="loginFormRef"
               class="login-form"
           >
-            <el-form-item prop="username">
+            <el-form-item prop="account">
               <el-input
-                  v-model="loginForm.username"
+                  v-model="loginForm.account"
                   placeholder="请输入用户名"
                   autocomplete="off"
                   size="large"
@@ -80,14 +80,14 @@ import { login } from '@/api/auth' // 引入登录API
 
 // 登录表单数据
 const loginForm = reactive({
-  username: '',
+  account: '',
   password: '',
   remember: false
 })
 
 // 表单验证规则
 const loginRules = {
-  username: [
+  account: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
   ],
@@ -106,9 +106,9 @@ const router = useRouter()
 
 // 页面加载时检查是否有记住的用户名
 onMounted(() => {
-  const savedUsername = localStorage.getItem('username')
+  const savedUsername = localStorage.getItem('account')
   if (savedUsername) {
-    loginForm.username = savedUsername
+    loginForm.account = savedUsername
     loginForm.remember = true
   }
 })
@@ -127,17 +127,18 @@ const handleLogin = async () => {
   loading.value = true
   try {
     // 调用登录API
-    const response = await login(loginForm.username, loginForm.password)
-
+    const response = await login(loginForm.account, loginForm.password)
+    console.log('登录成功:', response.data)
     // 保存token
-    const { token } = response.data
+    const { token,user } = response.data
     localStorage.setItem('token', token)
+    localStorage.setItem('login_user', JSON.stringify(user))
 
     // 记住用户名
     if (loginForm.remember) {
-      localStorage.setItem('username', loginForm.username)
+      localStorage.setItem('account', loginForm.account)
     } else {
-      localStorage.removeItem('username')
+      localStorage.removeItem('account')
     }
 
     ElMessage.success('登录成功，正在跳转...')

@@ -30,6 +30,11 @@ var DefaultPasswordConfig = &PasswordConfig{
 	SaltLen: 16,
 }
 
+// HashDefaultConfigPassword 使用默认配置加密密码
+func HashDefaultConfigPassword(password string) (string, error) {
+	return HashPassword(password, DefaultPasswordConfig)
+}
+
 // HashPassword 加密密码
 func HashPassword(password string, config *PasswordConfig) (string, error) {
 	// 生成随机盐

@@ -2,16 +2,16 @@ import request from '@/utils/request'
 
 /**
  * 用户登录
- * @param {string} username - 用户名
+ * @param {string} account - 用户名
  * @param {string} password - 密码
  * @returns {Promise}
  */
-export function login(username, password) {
+export function login(account, password) {
     return request({
-        url: '/auth/login',
+        url: '/login',
         method: 'post',
         data: {
-            username,
+            account,
             password
         }
     })
@@ -23,7 +23,7 @@ export function login(username, password) {
  */
 export function logout() {
     return request({
-        url: '/auth/logout',
+        url: '/logout',
         method: 'post'
     })
 }
@@ -34,7 +34,7 @@ export function logout() {
  */
 export function getUserInfo() {
     return request({
-        url: '/auth/userInfo',
+        url: '/profile',
         method: 'get'
     })
 }

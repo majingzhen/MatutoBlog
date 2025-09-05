@@ -127,7 +127,7 @@ make docker-run
 ### Database Setup
 - Requires MySQL database named `matuto_blog`
 - Tables auto-created on startup via `internal/database/init_tables.go`
-- Database schema available in `doc/blog_optimized.sql`
+- Database schema available in `doc/blog.sql`
 
 ### Development Workflow
 1. Start with `make run` for development

@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"matuto-blog/config"
 	"matuto-blog/internal/api/controllers"
-	"matuto-blog/internal/api/middleware"
+	"matuto-blog/internal/api/middlewares"
 	"matuto-blog/pkg/utils"
 )
 
@@ -13,8 +13,8 @@ func InitRoutes() *gin.Engine {
 	r := gin.New()
 
 	// 使用中间件
-	r.Use(middleware.Logger())
-	r.Use(middleware.CORS())
+	r.Use(middlewares.Logger())
+	r.Use(middlewares.CORS())
 
 	// 设置模板路径 - 根据主题配置加载模板
 	themePath := config.GetString("theme.path")
@@ -22,9 +22,9 @@ func InitRoutes() *gin.Engine {
 		"default",
 		"theme2",
 	}
-	//r.HTMLRender = utils.LoadThemeTemplateFiles(themePath, ".html")
+	// 设置模板方法
 	customFuncs := utils.GenTemplateFuncMap()
-
+	// 加载模板
 	tplManager := utils.NewTemplateManager(themePath, templateNames)
 	tplManager.LoadTemplates(r, customFuncs)
 
@@ -68,29 +68,9 @@ func InitRoutes() *gin.Engine {
 		frontend.POST("/comment/submit", commentController.Submit)
 	}
 
-	// 管理员登录路由
-	admin := r.Group("/admin")
-	{
-		admin.GET("/login", authController.AdminLoginPage)
-		admin.POST("/login", authController.AdminLogin)
-		admin.GET("/logout", authController.AdminLogout)
-	}
-
 	// 需要认证的管理后台路由
-	adminAuth := r.Group("/admin", middleware.SessionAuth())
+	adminAuth := r.Group("/admin", middlewares.JWTAuth())
 	{
-		// 后台首页
-		adminAuth.GET("", func(c *gin.Context) {
-			c.HTML(200, "admin/index.html", gin.H{
-				"title": "管理后台",
-			})
-		})
-		adminAuth.GET("/", func(c *gin.Context) {
-			c.HTML(200, "admin/index.html", gin.H{
-				"title": "管理后台",
-			})
-		})
-
 		// 文章管理
 		articles := adminAuth.Group("/articles")
 		{
@@ -164,12 +144,14 @@ func InitRoutes() *gin.Engine {
 	{
 		// 认证接口
 		api.POST("/login", authController.Login)
-
+		api.POST("/logout", authController.Logout)
 		// 需要认证的API
-		apiAuth := api.Group("", middleware.JWTAuth())
+		apiAuth := api.Group("", middlewares.JWTAuth())
 		{
 			apiAuth.GET("/profile", authController.GetProfile)
+
 		}
+
 	}
 
 	return r

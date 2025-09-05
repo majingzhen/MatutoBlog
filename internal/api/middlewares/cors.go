@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"matuto-blog/config"

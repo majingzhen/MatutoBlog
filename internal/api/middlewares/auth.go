@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"matuto-blog/internal/database"
@@ -109,95 +109,6 @@ func JWTAuth() gin.HandlerFunc {
 				"code": 401,
 				"msg":  "用户已被禁用",
 			})
-			c.Abort()
-			return
-		}
-
-		// 将用户信息存储到上下文中
-		c.Set("user", &user)
-		c.Set("user_id", user.Id)
-		c.Set("username", user.Username)
-		c.Set("account", user.Account)
-
-		c.Next()
-	}
-}
-
-// SessionAuth Session认证中间件 (用于管理后台)
-func SessionAuth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// 从cookie或session中获取用户信息
-		session, err := c.Cookie("admin_session")
-		if err != nil || session == "" {
-			// 如果是AJAX请求，返回JSON
-			if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"code": 401,
-					"msg":  "请先登录",
-				})
-				c.Abort()
-				return
-			}
-
-			// 重定向到登录页面
-			c.Redirect(http.StatusFound, "/admin/login")
-			c.Abort()
-			return
-		}
-
-		// 解析session token
-		claims, err := ParseToken(session)
-		if err != nil {
-			// 清除无效的cookie
-			c.SetCookie("admin_session", "", -1, "/", "", false, true)
-
-			if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"code": 401,
-					"msg":  "登录已过期",
-				})
-				c.Abort()
-				return
-			}
-
-			c.Redirect(http.StatusFound, "/admin/login")
-			c.Abort()
-			return
-		}
-
-		// 验证用户是否存在
-		var user models.User
-		if err := database.DB.First(&user, claims.UserID).Error; err != nil {
-			c.SetCookie("admin_session", "", -1, "/", "", false, true)
-
-			if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"code": 401,
-					"msg":  "用户不存在",
-				})
-				c.Abort()
-				return
-			}
-
-			c.Redirect(http.StatusFound, "/admin/login")
-			c.Abort()
-			return
-		}
-
-		// 检查用户状态
-		if user.Status != 1 {
-			c.SetCookie("admin_session", "", -1, "/", "", false, true)
-
-			if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"code": 401,
-					"msg":  "用户已被禁用",
-				})
-				c.Abort()
-				return
-			}
-
-			c.Redirect(http.StatusFound, "/admin/login")
 			c.Abort()
 			return
 		}

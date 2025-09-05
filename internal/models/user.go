@@ -1,23 +1,22 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 	"matuto-blog/pkg/utils"
+	"time"
 )
 
 // User 博客用户模型
 type User struct {
-	Id        int       `json:"id" gorm:"primaryKey;autoIncrement;comment:主键ID"`
-	Account   string    `json:"account" gorm:"uniqueIndex;size:100;comment:账号"`
-	Username  string    `json:"username" gorm:"uniqueIndex;size:50;not null;comment:用户名"`
-	Password  string    `json:"-" gorm:"size:100;not null;comment:密码"`
-	Avatar    string    `json:"avatar" gorm:"size:255;comment:头像URL"`
-	Email     string    `json:"email" gorm:"uniqueIndex;size:100;comment:邮箱"`
-	Status    int       `json:"status" gorm:"default:0;comment:状态:0正常,1禁用"`
-	CreatedAt time.Time `json:"created_at" gorm:"comment:创建时间"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"comment:更新时间"`
+	Id        int       `json:"id" gorm:"column:id;primaryKey;autoIncrement;comment:主键ID"`
+	Account   string    `json:"account" gorm:"column:account;uniqueIndex;size:100;comment:账号"`
+	Username  string    `json:"username" gorm:"column:username;uniqueIndex;size:50;not null;comment:用户名"`
+	Password  string    `json:"-" gorm:"column:password;size:100;not null;comment:密码"`
+	Avatar    string    `json:"avatar" gorm:"column:avatar;size:255;comment:头像URL"`
+	Email     string    `json:"email" gorm:"column:email;uniqueIndex;size:100;comment:邮箱"`
+	Status    int       `json:"status" gorm:"column:status;default:0;comment:状态:0正常,1禁用"`
+	CreatedAt time.Time `json:"created_at" gorm:"column:created_at;autoCreateTime;comment:创建时间"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at;autoUpdateTime;comment:更新时间"`
 }
 
 // UserStatus 用户状态常量
