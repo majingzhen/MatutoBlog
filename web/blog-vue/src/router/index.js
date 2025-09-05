@@ -40,6 +40,12 @@ const router = createRouter({
           name: 'ArticleList',
           component: () => import('@/views/article/index.vue')
         },
+        // 附件列表
+        {
+          path: '/attach',
+          name: 'AttachList',
+          component: () => import('@/views/attach/index.vue')
+        },
         // 用户列表
         // {
         //   path: '/user',

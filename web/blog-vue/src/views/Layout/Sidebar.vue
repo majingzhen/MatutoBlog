@@ -36,32 +36,9 @@
         <el-menu-item index="/article" @click="handleMenuClick('/article')">文章列表</el-menu-item>
         <el-menu-item index="/publish" @click="handleMenuClick('/publish')">发布文章</el-menu-item>
       </el-sub-menu>
-
-      <!-- 用户管理（带子菜单） -->
-      <el-sub-menu index="user">
-        <template #title>
-          <el-icon><User /></el-icon>
-          <span>用户管理</span>
-        </template>
-        <el-menu-item index="/user" @click="handleMenuClick('/user')">用户列表</el-menu-item>
-      </el-sub-menu>
-
-      <!-- 角色管理 -->
-      <el-menu-item index="/role" @click="handleMenuClick('/role')">
-        <el-icon><UserFilled /></el-icon>
-        <template #title>角色管理</template>
-      </el-menu-item>
-
-      <!-- 菜单管理 -->
-      <el-menu-item index="/menu" @click="handleMenuClick('/menu')">
-        <el-icon><Menu /></el-icon>
-        <template #title>菜单管理</template>
-      </el-menu-item>
-
-      <!-- 系统设置 -->
-      <el-menu-item index="/settings" @click="handleMenuClick('/settings')">
-        <el-icon><Setting /></el-icon>
-        <template #title>系统设置</template>
+      <el-menu-item index="/attach" @click="handleMenuClick('/attach')">
+        <el-icon><Document /></el-icon>
+        <template #title>附件管理</template>
       </el-menu-item>
     </el-menu>
   </div>

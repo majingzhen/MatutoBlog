@@ -22,7 +22,7 @@ type AttachmentController struct{}
 
 type AttachPageRequest struct {
 	common.PageRequest
-	Title string `json:"title" form:"title"`
+	Name string `json:"name" form:"name"`
 }
 
 // AttachPage 附件列表
@@ -38,8 +38,8 @@ func (r *AttachmentController) AttachPage(ctx *gin.Context) {
 
 	query := database.DB.Model(&models.Attach{})
 
-	if req.Title != "" {
-		query = query.Where("title LIKE ?", "%"+req.Title+"%")
+	if req.Name != "" {
+		query = query.Where("name LIKE ?", "%"+req.Name+"%")
 	}
 
 	query.Count(&total)
