@@ -6,7 +6,8 @@
       "Bash(find:*)",
       "Bash(go build:*)",
       "Bash(go run:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(claude mcp add:*)"
     ],
     "deny": [],
     "ask": []
