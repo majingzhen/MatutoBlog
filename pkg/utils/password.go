@@ -5,9 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	mathrand "math/rand"
 	"strings"
-	"time"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -144,9 +142,6 @@ func GenerateRandomPassword(length int) (string, error) {
 		length = 8
 	}
 
-	// 初始化随机数种子
-	mathrand.Seed(time.Now().UnixNano())
-
 	// 字符集
 	const (
 		lowercase = "abcdefghijklmnopqrstuvwxyz"
@@ -158,31 +153,77 @@ func GenerateRandomPassword(length int) (string, error) {
 	// 确保包含所有类型的字符
 	password := make([]byte, length)
 
+	// 使用加密安全的随机数生成器
 	// 至少包含一个小写字母
-	password[0] = lowercase[mathrand.Intn(len(lowercase))]
+	if err := generateRandomChar(password[:1], lowercase); err != nil {
+		return "", err
+	}
 
 	// 至少包含一个大写字母
-	password[1] = uppercase[mathrand.Intn(len(uppercase))]
+	if err := generateRandomChar(password[1:2], uppercase); err != nil {
+		return "", err
+	}
 
 	// 至少包含一个数字
-	password[2] = digits[mathrand.Intn(len(digits))]
+	if err := generateRandomChar(password[2:3], digits); err != nil {
+		return "", err
+	}
 
 	// 至少包含一个特殊字符
-	password[3] = symbols[mathrand.Intn(len(symbols))]
+	if err := generateRandomChar(password[3:4], symbols); err != nil {
+		return "", err
+	}
 
 	// 填充剩余位置
 	allChars := lowercase + uppercase + digits + symbols
-	for i := 4; i < length; i++ {
-		password[i] = allChars[mathrand.Intn(len(allChars))]
+	if err := generateRandomChar(password[4:], allChars); err != nil {
+		return "", err
 	}
 
 	// 打乱密码字符顺序
-	for i := len(password) - 1; i > 0; i-- {
-		j := mathrand.Intn(i + 1)
-		password[i], password[j] = password[j], password[i]
+	if err := shuffleBytes(password); err != nil {
+		return "", err
 	}
 
 	return string(password), nil
+}
+
+// generateRandomChar 使用加密安全的随机数生成字符
+func generateRandomChar(buffer []byte, charset string) error {
+	for i := range buffer {
+		// 生成随机索引
+		randomBytes := make([]byte, 1)
+		for {
+			if _, err := rand.Read(randomBytes); err != nil {
+				return err
+			}
+			// 避免模数偏差
+			if int(randomBytes[0]) < 256-256%len(charset) {
+				buffer[i] = charset[int(randomBytes[0])%len(charset)]
+				break
+			}
+		}
+	}
+	return nil
+}
+
+// shuffleBytes 使用Fisher-Yates洗牌算法打乱字节数组
+func shuffleBytes(data []byte) error {
+	for i := len(data) - 1; i > 0; i-- {
+		// 生成 0 到 i 的随机数
+		randomBytes := make([]byte, 1)
+		for {
+			if _, err := rand.Read(randomBytes); err != nil {
+				return err
+			}
+			j := int(randomBytes[0]) % (i + 1)
+			if j <= i {
+				data[i], data[j] = data[j], data[i]
+				break
+			}
+		}
+	}
+	return nil
 }
 
 // IsPasswordStrong 检查密码强度

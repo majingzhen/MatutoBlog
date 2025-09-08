@@ -20,6 +20,7 @@ func main() {
 	if err := database2.Init(); err != nil {
 		logger.Error("Warning: Failed to initialize database: %v", err)
 		logger.Error("Continuing without database connection...")
+		return
 	} else {
 		// 初始化数据库表
 		if err := database2.InitTables(database2.GetDB()); err != nil {

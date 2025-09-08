@@ -5,10 +5,10 @@ server:
   mode: "debug"
 
 database:
-  host: "localhost"
+  host: "matuto_db"
   port: "3306"
-  username: "root"
-  password: "123456"
+  username: "matuto_blog"
+  password: "e53k6CfRpheYfma4"
   dbname: "matuto_blog"
   charset: "utf8mb4"
   parseTime: true

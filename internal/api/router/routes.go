@@ -1,11 +1,12 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"matuto-blog/config"
 	"matuto-blog/internal/api/controllers"
 	"matuto-blog/internal/api/middlewares"
 	"matuto-blog/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 // InitRoutes 初始化路由
@@ -83,6 +84,7 @@ func InitRoutes() *gin.Engine {
 			{
 				attr.POST("/upload", attachmentController.Upload)
 				attr.GET("/page", attachmentController.AttachPage)
+				attr.DELETE("/:id", attachmentController.DeleteAttach)
 			}
 			// 文章管理
 			articles := apiAuth.Group("/articles")
@@ -97,25 +99,15 @@ func InitRoutes() *gin.Engine {
 			{
 				categories.GET("/page", categoryController.CategoryPage)
 				categories.DELETE("/:id", categoryController.DeleteCategory)
-				categories.GET("/", categoryController.AdminIndex)
-				categories.GET("/create", categoryController.AdminCreate)
-				categories.POST("/create", categoryController.AdminStore)
-				categories.GET("/:id/edit", categoryController.AdminEdit)
-				categories.PUT("/:id", categoryController.AdminUpdate)
-				categories.POST("/:id", categoryController.AdminUpdate)
 			}
 			// 标签管理
 			tags := apiAuth.Group("/tags")
 			{
-				tags.GET("", tagController.AdminIndex)
-				tags.GET("/", tagController.AdminIndex)
-				tags.GET("/create", tagController.AdminCreate)
+				tags.GET("/page", tagController.TagPage)
 				tags.POST("/create", tagController.AdminStore)
-				tags.GET("/:id/edit", tagController.AdminEdit)
 				tags.PUT("/:id", tagController.AdminUpdate)
 				tags.POST("/:id", tagController.AdminUpdate)
-				tags.DELETE("/:id", tagController.AdminDestroy)
-				tags.POST("/:id/delete", tagController.AdminDestroy)
+				tags.DELETE("/:id", tagController.DeleteTag)
 			}
 		}
 

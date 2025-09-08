@@ -57,9 +57,6 @@ service.interceptors.response.use(
         // 根据后端约定的状态码处理
         // 假设成功状态码为200
         if (res.code !== 200) {
-            // 错误提示
-            ElMessage.error(res.message || '操作失败')
-
             // 特殊错误码处理
             if (res.code === 401) {
                 // 未授权，需要重新登录

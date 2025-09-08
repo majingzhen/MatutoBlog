@@ -3,8 +3,8 @@ package models
 // Category 分类模型
 type Category struct {
 	BaseModel
-	Name            string `json:"name" gorm:"size:256;not null;comment:分类名"`
-	Pid             int    `json:"pid" gorm:"default:-1;comment:父级id"`
+	Name            string `json:"name" gorm:"colum:name,size:256;not null;comment:分类名"`
+	Pid             int    `json:"pId" gorm:"colum:p_id,default:-1;comment:父级id"`
 	Desc            string `json:"desc" gorm:"size:512;comment:描述"`
 	MetaKeywords    string `json:"meta_keywords" gorm:"size:256;comment:SEO关键字"`
 	Thumbnail       string `json:"thumbnail" gorm:"size:256;comment:封面图"`

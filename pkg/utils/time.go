@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"database/sql/driver"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -72,4 +74,103 @@ func FormatTimePtr(t *time.Time) string {
 		return ""
 	}
 	return t.Format("2006-01-02 15:04:05")
+}
+
+// DateTime 自定义时间类型，用于统一JSON时间格式
+type DateTime struct {
+	time.Time
+}
+
+// NewDateTime 创建新的DateTime
+func NewDateTime(t time.Time) DateTime {
+	return DateTime{Time: t}
+}
+
+// NewDateTimeNow 创建当前时间的DateTime
+func NewDateTimeNow() DateTime {
+	return DateTime{Time: time.Now()}
+}
+
+// NewDateTimePtr 创建DateTime指针
+func NewDateTimePtr(t time.Time) *DateTime {
+	if t.IsZero() {
+		return nil
+	}
+	return &DateTime{Time: t}
+}
+
+// MarshalJSON 自定义JSON序列化
+func (dt DateTime) MarshalJSON() ([]byte, error) {
+	if dt.IsZero() {
+		return []byte("null"), nil
+	}
+	formatted := dt.Format("2006-01-02 15:04:05")
+	return []byte(fmt.Sprintf(`"%s"`, formatted)), nil
+}
+
+// UnmarshalJSON 自定义JSON反序列化
+func (dt *DateTime) UnmarshalJSON(data []byte) error {
+	str := strings.Trim(string(data), `"`)
+	if str == "null" || str == "" {
+		dt.Time = time.Time{}
+		return nil
+	}
+
+	// 支持多种时间格式解析
+	timeFormats := []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05Z",
+		"2006-01-02T15:04:05.000Z",
+		"2006-01-02T15:04:05+08:00",
+		"2006-01-02",
+	}
+
+	var err error
+	for _, format := range timeFormats {
+		dt.Time, err = time.Parse(format, str)
+		if err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("无法解析时间格式: %s", str)
+}
+
+// Value 实现 driver.Valuer 接口，用于数据库存储
+func (dt DateTime) Value() (driver.Value, error) {
+	if dt.IsZero() {
+		return nil, nil
+	}
+	return dt.Time, nil
+}
+
+// Scan 实现 sql.Scanner 接口，用于数据库读取
+func (dt *DateTime) Scan(value interface{}) error {
+	if value == nil {
+		dt.Time = time.Time{}
+		return nil
+	}
+
+	switch v := value.(type) {
+	case time.Time:
+		dt.Time = v
+		return nil
+	case string:
+		return dt.UnmarshalJSON([]byte(`"` + v + `"`))
+	default:
+		return fmt.Errorf("无法将 %T 转换为 DateTime", value)
+	}
+}
+
+// String 返回格式化的时间字符串
+func (dt DateTime) String() string {
+	if dt.IsZero() {
+		return ""
+	}
+	return dt.Format("2006-01-02 15:04:05")
+}
+
+// IsValid 检查时间是否有效
+func (dt DateTime) IsValid() bool {
+	return !dt.IsZero()
 }

@@ -6,7 +6,6 @@ import (
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
 	"matuto-blog/pkg/common"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -156,69 +155,17 @@ func (a *AttachmentController) Upload(ctx *gin.Context) {
 	})
 }
 
-// AdminIndex 管理后台附件列表
-func (a *AttachmentController) AdminIndex(ctx *gin.Context) {
-	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
-	pageSize := 20
-	keyword := strings.TrimSpace(ctx.Query("keyword"))
-
-	var attachments []models.Attach
-	var total int64
-
-	query := database.DB.Model(&models.Attach{})
-
-	if keyword != "" {
-		query = query.Where("name LIKE ?", "%"+keyword+"%")
-	}
-
-	query.Count(&total)
-
-	offset := (page - 1) * pageSize
-	query.Order("created_at DESC").
-		Limit(pageSize).
-		Offset(offset).
-		Find(&attachments)
-
-	// 为每个附件生成访问URL
-	baseURL := viper.GetString("storage.local.base_url")
-	if baseURL == "" {
-		baseURL = "http://localhost:8080/uploads/"
-	}
-
-	for i := range attachments {
-		attachments[i].Path = baseURL + attachments[i].Path
-	}
-
-	ctx.HTML(http.StatusOK, "admin/attachments/index.html", gin.H{
-		"attachments": attachments,
-		"pagination": gin.H{
-			"page":      page,
-			"page_size": pageSize,
-			"total":     total,
-			"pages":     (int(total) + pageSize - 1) / pageSize,
-		},
-		"keyword": keyword,
-		"title":   "附件管理",
-	})
-}
-
-// AdminDestroy 删除附件
-func (a *AttachmentController) AdminDestroy(ctx *gin.Context) {
+// DeleteAttach 删除附件
+func (a *AttachmentController) DeleteAttach(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的附件ID",
-		})
+		common.ServerError(ctx, "无效的附件ID")
 		return
 	}
 
 	var attachment models.Attach
 	if err := database.DB.First(&attachment, id).Error; err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"code": 404,
-			"msg":  "附件不存在",
-		})
+		common.ServerError(ctx, "附件不存在")
 		return
 	}
 
@@ -236,38 +183,25 @@ func (a *AttachmentController) AdminDestroy(ctx *gin.Context) {
 
 	// 删除数据库记录
 	if err := database.DB.Delete(&attachment).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "删除附件记录失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "删除附件记录失败")
 		return
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "附件删除成功",
-	})
+	common.SuccessWithMessage(ctx, "附件删除成功", nil)
 }
 
-// AdminBatchDelete 批量删除附件
-func (a *AttachmentController) AdminBatchDelete(ctx *gin.Context) {
+// BatchDeleteAttach 批量删除附件
+func (a *AttachmentController) BatchDeleteAttach(ctx *gin.Context) {
 	var req struct {
 		IDs []uint `json:"ids" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "参数错误: " + err.Error(),
-		})
+		common.ServerError(ctx, "参数错误: "+err.Error())
 		return
 	}
 
 	if len(req.IDs) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "请选择要删除的附件",
-		})
+		common.ServerError(ctx, "请选择要删除的附件")
 		return
 	}
 
@@ -290,29 +224,8 @@ func (a *AttachmentController) AdminBatchDelete(ctx *gin.Context) {
 
 	// 批量删除数据库记录
 	if err := database.DB.Where("id IN ?", req.IDs).Delete(&models.Attach{}).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "批量删除失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "批量删除失败")
 		return
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  fmt.Sprintf("已删除 %d 个附件", len(attachments)),
-	})
-}
-
-// GetUploadToken 获取上传令牌（如果需要的话）
-func (a *AttachmentController) GetUploadToken(ctx *gin.Context) {
-	// 这里可以实现上传令牌生成逻辑
-	// 暂时返回简单的成功响应
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "获取上传令牌成功",
-		"data": gin.H{
-			"token":      "simple-upload-token",
-			"expires_at": time.Now().Add(time.Hour).Unix(),
-		},
-	})
+	common.SuccessWithMessage(ctx, "批量删除成功", nil)
 }
