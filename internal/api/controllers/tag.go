@@ -71,6 +71,13 @@ func (t *TagController) DeleteTag(ctx *gin.Context) {
 	common.SuccessWithMessage(ctx, "标签删除成功", nil)
 }
 
+// TagEnableList 获取启用的标签列表
+func (t *TagController) TagEnableList(ctx *gin.Context) {
+	var tags []models.Tag
+	database.DB.Where("status = ?", models.StatusActive).Find(&tags)
+	common.Success(ctx, tags)
+}
+
 // CreateTag 创建标签
 func (t *TagController) CreateTag(ctx *gin.Context) {
 	var req TagRequest

@@ -101,6 +101,7 @@ func InitRoutes() *gin.Engine {
 				categories.POST("", categoryController.CreateCategory)
 				categories.PUT("/:id", categoryController.UpdateCategory)
 				categories.DELETE("/:id", categoryController.DeleteCategory)
+				categories.GET("/enable-list", categoryController.CategoryEnableList)
 			}
 			// 标签管理
 			tags := apiAuth.Group("/tags")
@@ -110,6 +111,7 @@ func InitRoutes() *gin.Engine {
 				tags.PUT("/:id", tagController.UpdateTag)
 				tags.POST("/:id", tagController.UpdateTag)
 				tags.DELETE("/:id", tagController.DeleteTag)
+				tags.GET("/enable-list", tagController.TagEnableList)
 			}
 			// 评论管理
 			comments := apiAuth.Group("/comments")

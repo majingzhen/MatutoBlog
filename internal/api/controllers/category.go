@@ -64,6 +64,13 @@ func (c *CategoryController) CategoryPage(ctx *gin.Context) {
 	common.SuccessPage(ctx, categories, total, req.Page, req.PageSize)
 }
 
+// CategoryEnableList 分类启用列表
+func (c *CategoryController) CategoryEnableList(ctx *gin.Context) {
+	var categories []models.Category
+	database.DB.Where("status = ?", models.StatusActive).Order("created_at DESC").Find(&categories)
+	common.Success(ctx, categories)
+}
+
 // DeleteCategory 删除分类
 func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
