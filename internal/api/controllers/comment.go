@@ -4,15 +4,67 @@ import (
 	"fmt"
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
+	"matuto-blog/pkg/common"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // CommentController 评论控制器
 type CommentController struct{}
+
+// CommentPageRequest 评论分页请求结构
+type CommentPageRequest struct {
+	common.PageRequest
+	Status    *int   `json:"status" form:"status"`
+	ArticleId *int   `json:"articleId" form:"articleId"`
+	Keyword   string `json:"keyword" form:"keyword"`
+}
+
+// CommentPage 评论分页列表
+func (c *CommentController) CommentPage(ctx *gin.Context) {
+	var req CommentPageRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		common.ServerError(ctx, "参数错误: "+err.Error())
+		return
+	}
+
+	var comments []models.Comment
+	var total int64
+	query := database.DB.Model(&models.Comment{}).
+		Preload("Article", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, title")
+		})
+
+	// 状态筛选
+	if req.Status != nil {
+		query = query.Where("status = ?", *req.Status)
+	}
+
+	// 文章ID筛选
+	if req.ArticleId != nil {
+		query = query.Where("article_id = ?", *req.ArticleId)
+	}
+
+	// 关键词搜索
+	if req.Keyword != "" {
+		query = query.Where("username LIKE ? OR content LIKE ? OR email LIKE ?",
+			"%"+req.Keyword+"%", "%"+req.Keyword+"%", "%"+req.Keyword+"%")
+	}
+
+	query.Count(&total)
+
+	offset := (req.Page - 1) * req.PageSize
+	query.Order("created_at DESC").
+		Limit(req.PageSize).
+		Offset(offset).
+		Find(&comments)
+
+	common.SuccessPage(ctx, comments, total, req.Page, req.PageSize)
+}
 
 // CommentRequest 评论请求结构
 type CommentRequest struct {

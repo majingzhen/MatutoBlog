@@ -42,7 +42,7 @@ func (t *TagController) TagPage(ctx *gin.Context) {
 	}
 	query.Count(&total)
 	offset := (req.Page - 1) * req.PageSize
-	query.Order("sort ASC, created_at DESC").
+	query.Order("created_at DESC").
 		Limit(req.PageSize).
 		Offset(offset).
 		Find(&tags)

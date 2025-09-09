@@ -40,6 +40,17 @@
         <el-icon><Document /></el-icon>
         <template #title>附件管理</template>
       </el-menu-item>
+
+      <!-- 内容管理 -->
+      <el-sub-menu index="content">
+        <template #title>
+          <el-icon><Folder /></el-icon>
+          <span>内容管理</span>
+        </template>
+        <el-menu-item index="/category" @click="handleMenuClick('/category')">分类管理</el-menu-item>
+        <el-menu-item index="/tag" @click="handleMenuClick('/tag')">标签管理</el-menu-item>
+        <el-menu-item index="/comment" @click="handleMenuClick('/comment')">评论管理</el-menu-item>
+      </el-sub-menu>
     </el-menu>
   </div>
 </template>
@@ -48,7 +59,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 // 引入 Element Plus 图标
-import { HomeFilled, User, UserFilled, Menu, Setting, Edit, Document } from '@element-plus/icons-vue'
+import { HomeFilled, User, UserFilled, Menu, Setting, Edit, Document, Folder } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()

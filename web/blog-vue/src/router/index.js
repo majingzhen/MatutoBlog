@@ -46,6 +46,24 @@ const router = createRouter({
           name: 'AttachList',
           component: () => import('@/views/attach/index.vue')
         },
+        // 分类管理
+        {
+          path: '/category',
+          name: 'CategoryList',
+          component: () => import('@/views/category/index.vue')
+        },
+        // 标签管理
+        {
+          path: '/tag',
+          name: 'TagList',
+          component: () => import('@/views/tag/index.vue')
+        },
+        // 评论管理
+        {
+          path: '/comment',
+          name: 'CommentList',
+          component: () => import('@/views/comment/index.vue')
+        },
         // 用户列表
         // {
         //   path: '/user',

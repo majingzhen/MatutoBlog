@@ -4,7 +4,6 @@ import (
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
 	"matuto-blog/pkg/common"
-	"matuto-blog/pkg/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -15,20 +14,21 @@ type CategoryController struct{}
 
 // CategoryRequest 分类请求结构
 type CategoryRequest struct {
-	Id              int    `json:"id"`
-	PId             int    `json:"pId"`
 	Name            string `json:"name" binding:"required"`
+	Pid             int    `json:"pId"`
+	Desc            string `json:"desc"`
 	Thumbnail       string `json:"thumbnail"`
 	Slug            string `json:"slug"`
-	Desc            string `json:"desc"`
 	MetaKeywords    string `json:"metaKeywords"`
 	MetaDescription string `json:"metaDescription"`
+	Status          int    `json:"status"`
 }
 
 // CategoryPageRequest 分类分页请求
 type CategoryPageRequest struct {
 	common.PageRequest
-	Name string `json:"name" form:"name"`
+	Name   string `json:"name" form:"name"`
+	Status *int   `json:"status" form:"status"`
 }
 
 // CategoryPage 分类分页
@@ -44,8 +44,14 @@ func (c *CategoryController) CategoryPage(ctx *gin.Context) {
 
 	query := database.DB.Model(&models.Category{})
 
+	// 名称搜索
 	if req.Name != "" {
 		query = query.Where("name LIKE ?", "%"+req.Name+"%")
+	}
+
+	// 状态筛选
+	if req.Status != nil {
+		query = query.Where("status = ?", *req.Status)
 	}
 
 	query.Count(&total)
@@ -89,32 +95,40 @@ func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
 	common.SuccessWithMessage(ctx, "分类删除成功", nil)
 }
 
-// AddCategory 添加分类
-func (c *CategoryController) AddCategory(ctx *gin.Context) {
+// CreateCategory 创建分类
+func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 	var req CategoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		common.ServerError(ctx, "参数错误: "+err.Error())
 		return
 	}
-	to, err := utils.ConvertTo[models.Category](req)
-	if err != nil {
-		common.ServerError(ctx, "参数错误: "+err.Error())
-		return
-	}
+
 	// 生成slug
 	if req.Slug == "" {
 		req.Slug = generateSlug(req.Name)
 	}
 
-	if err := database.DB.Create(&to).Error; err != nil {
-		common.ServerError(ctx, "添加分类失败: "+err.Error())
+	category := models.Category{
+		Name:            req.Name,
+		Pid:             req.Pid,
+		Desc:            req.Desc,
+		Thumbnail:       req.Thumbnail,
+		Slug:            req.Slug,
+		MetaKeywords:    req.MetaKeywords,
+		MetaDescription: req.MetaDescription,
+		Status:          req.Status,
+	}
+
+	if err := database.DB.Create(&category).Error; err != nil {
+		common.ServerError(ctx, "创建分类失败: "+err.Error())
 		return
 	}
+	common.SuccessWithMessage(ctx, "分类创建成功", nil)
 }
 
 // UpdateCategory 更新分类
 func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		common.ServerError(ctx, "无效的分类ID")
 		return
@@ -125,19 +139,16 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 		common.ServerError(ctx, "参数错误: "+err.Error())
 		return
 	}
-	to, err := utils.ConvertTo[models.Category](req)
-	if err != nil {
-		common.ServerError(ctx, "参数错误: "+err.Error())
-		return
-	}
-	if err := database.DB.First(&models.Category{}, id).Error; err != nil {
+
+	var category models.Category
+	if err := database.DB.First(&category, id).Error; err != nil {
 		common.ServerError(ctx, "分类不存在")
 		return
 	}
 
 	// 检查父分类不能是自己或子分类
-	if req.PId == int(id) {
-		common.ServerError(ctx, "父分类不能是自己或子分类")
+	if req.Pid == int(id) {
+		common.ServerError(ctx, "父分类不能是自己")
 		return
 	}
 
@@ -145,7 +156,18 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 	if req.Slug == "" {
 		req.Slug = generateSlug(req.Name)
 	}
-	if err := database.DB.Save(&to).Error; err != nil {
+
+	// 更新字段
+	category.Name = req.Name
+	category.Pid = req.Pid
+	category.Desc = req.Desc
+	category.Thumbnail = req.Thumbnail
+	category.Slug = req.Slug
+	category.MetaKeywords = req.MetaKeywords
+	category.MetaDescription = req.MetaDescription
+	category.Status = req.Status
+
+	if err := database.DB.Save(&category).Error; err != nil {
 		common.ServerError(ctx, "更新分类失败: "+err.Error())
 		return
 	}
