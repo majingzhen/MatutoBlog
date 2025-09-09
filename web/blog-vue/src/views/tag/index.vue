@@ -82,12 +82,6 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="sort" label="排序" width="80">
-          <template #default="{ row }">
-            <span>{{ row.sort || 0 }}</span>
-          </template>
-        </el-table-column>
-
         <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.created_at) }}
@@ -168,16 +162,6 @@
             />
           </div>
         </el-form-item>
-        
-        <el-form-item label="排序" prop="sort">
-          <el-input-number
-            v-model="form.sort"
-            :min="0"
-            :max="999"
-            controls-position="right"
-            placeholder="数字越小排序越靠前"
-          />
-        </el-form-item>
       </el-form>
       
       <template #footer>
@@ -228,8 +212,7 @@ const pagination = reactive({
 const form = reactive({
   id: null,
   name: '',
-  color: '#007bff',
-  sort: 0
+  color: '#007bff'
 })
 
 // 预定义颜色
@@ -256,12 +239,7 @@ const formRules = {
   ],
   color: [
     { required: true, message: '请选择标签颜色', trigger: 'blur' }
-  ],
-  sort: [
-    { required: true, message: '请输入排序值', trigger: 'blur' },
-    { type: 'number', min: 0, max: 999, message: '排序值应在 0 到 999 之间', trigger: 'blur' }
-  ]
-}
+  ]}
 
 // 获取标签列表
 const fetchTagList = async () => {
@@ -338,7 +316,6 @@ const handleEdit = (row) => {
   form.id = row.id
   form.name = row.name
   form.color = row.color || '#007bff'
-  form.sort = row.sort || 0
 }
 
 // 提交表单
@@ -353,8 +330,7 @@ const handleSubmit = async () => {
     
     const formData = {
       name: form.name,
-      color: form.color,
-      sort: form.sort
+      color: form.color
     }
     
     let response
@@ -417,7 +393,6 @@ const resetForm = () => {
   form.id = null
   form.name = ''
   form.color = '#007bff'
-  form.sort = 0
   
   if (formRef.value) {
     formRef.value.clearValidate()

@@ -106,18 +106,18 @@ func InitRoutes() *gin.Engine {
 			tags := apiAuth.Group("/tags")
 			{
 				tags.GET("/page", tagController.TagPage)
-				tags.POST("/create", tagController.AdminStore)
-				tags.PUT("/:id", tagController.AdminUpdate)
-				tags.POST("/:id", tagController.AdminUpdate)
+				tags.POST("/create", tagController.CreateTag)
+				tags.PUT("/:id", tagController.UpdateTag)
+				tags.POST("/:id", tagController.UpdateTag)
 				tags.DELETE("/:id", tagController.DeleteTag)
 			}
 			// 评论管理
 			comments := apiAuth.Group("/comments")
 			{
 				comments.GET("/page", commentController.CommentPage)
-				comments.PUT("/:id/status", commentController.AdminReview)
-				comments.DELETE("/:id", commentController.AdminDestroy)
-				comments.POST("/batch-review", commentController.AdminBatchReview)
+				comments.PUT("/:id/status", commentController.ReviewComment)
+				comments.DELETE("/:id", commentController.DestroyComment)
+				comments.POST("/batch-review", commentController.BatchReviewComment)
 			}
 		}
 

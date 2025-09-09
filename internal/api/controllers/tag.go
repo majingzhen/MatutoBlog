@@ -4,7 +4,6 @@ import (
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
 	"matuto-blog/pkg/common"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -72,14 +71,11 @@ func (t *TagController) DeleteTag(ctx *gin.Context) {
 	common.SuccessWithMessage(ctx, "标签删除成功", nil)
 }
 
-// AdminStore 保存标签
-func (t *TagController) AdminStore(ctx *gin.Context) {
+// CreateTag 创建标签
+func (t *TagController) CreateTag(ctx *gin.Context) {
 	var req TagRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "参数错误: " + err.Error(),
-		})
+		common.ServerError(ctx, "参数错误: "+err.Error())
 		return
 	}
 
@@ -95,48 +91,29 @@ func (t *TagController) AdminStore(ctx *gin.Context) {
 	}
 
 	if err := database.DB.Create(&tag).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "创建标签失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "创建标签失败: "+err.Error())
 		return
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "标签创建成功",
-		"data": gin.H{
-			"id": tag.Id,
-		},
-	})
+	common.SuccessWithMessage(ctx, "标签创建成功", tag)
 }
 
-// AdminUpdate 更新标签
-func (t *TagController) AdminUpdate(ctx *gin.Context) {
+// UpdateTag 更新标签
+func (t *TagController) UpdateTag(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的标签ID",
-		})
+		common.ServerError(ctx, "无效的标签ID")
 		return
 	}
 
 	var req TagRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "参数错误: " + err.Error(),
-		})
+		common.ServerError(ctx, "参数错误: "+err.Error())
 		return
 	}
 
 	var tag models.Tag
 	if err := database.DB.First(&tag, id).Error; err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"code": 404,
-			"msg":  "标签不存在",
-		})
+		common.ServerError(ctx, "标签不存在")
 		return
 	}
 
@@ -150,15 +127,10 @@ func (t *TagController) AdminUpdate(ctx *gin.Context) {
 	tag.Color = req.Color
 
 	if err := database.DB.Save(&tag).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "更新标签失败: " + err.Error(),
-		})
+
+		common.ServerError(ctx, "更新标签失败: "+err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "标签更新成功",
-	})
+	common.SuccessWithMessage(ctx, "标签更新成功", tag)
 }

@@ -7,7 +7,6 @@ import (
 	"matuto-blog/pkg/common"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -147,106 +146,36 @@ func (c *CommentController) Submit(ctx *gin.Context) {
 	}
 }
 
-// AdminIndex 管理后台评论列表
-func (c *CommentController) AdminIndex(ctx *gin.Context) {
-	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
-	pageSize := 20
-	status := ctx.Query("status")
-	keyword := strings.TrimSpace(ctx.Query("keyword"))
-
-	var comments []models.Comment
-	var total int64
-	query := database.DB.Model(&models.Comment{}).Preload("Article", "id, title")
-
-	// 状态筛选
-	if status != "" {
-		s, _ := strconv.Atoi(status)
-		query = query.Where("status = ?", s)
-	}
-
-	// 关键词搜索
-	if keyword != "" {
-		query = query.Where("user_name LIKE ? OR content LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
-	}
-
-	query.Count(&total)
-
-	offset := (page - 1) * pageSize
-	query.Order("created_at DESC").
-		Limit(pageSize).
-		Offset(offset).
-		Find(&comments)
-
-	// 获取统计数据
-	var pendingCount, approvedCount, rejectedCount int64
-	database.DB.Model(&models.Comment{}).Where("status = ?", 0).Count(&pendingCount)
-	database.DB.Model(&models.Comment{}).Where("status = ?", 1).Count(&approvedCount)
-	database.DB.Model(&models.Comment{}).Where("status = ?", 2).Count(&rejectedCount)
-
-	ctx.HTML(http.StatusOK, "admin/comments/index.html", gin.H{
-		"comments": comments,
-		"pagination": gin.H{
-			"page":      page,
-			"page_size": pageSize,
-			"total":     total,
-			"pages":     (int(total) + pageSize - 1) / pageSize,
-		},
-		"current_status": status,
-		"keyword":        keyword,
-		"stats": gin.H{
-			"pending":  pendingCount,
-			"approved": approvedCount,
-			"rejected": rejectedCount,
-		},
-		"title": "评论管理",
-	})
-}
-
-// AdminReview 审核评论
-func (c *CommentController) AdminReview(ctx *gin.Context) {
+// ReviewComment 审核评论
+func (c *CommentController) ReviewComment(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的评论ID",
-		})
+		common.ServerError(ctx, "无效的评论ID")
 		return
 	}
 
 	status, err := strconv.Atoi(ctx.PostForm("status"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的状态值",
-		})
+		common.ServerError(ctx, "无效的状态值")
 		return
 	}
 
 	// 验证状态值
 	if status < 0 || status > 2 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "状态值必须是 0(待审核), 1(已通过), 2(已拒绝)",
-		})
+		common.ServerError(ctx, "状态值必须是 0(待审核), 1(已通过), 2(已拒绝)")
 		return
 	}
 
 	var comment models.Comment
 	if err := database.DB.First(&comment, id).Error; err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"code": 404,
-			"msg":  "评论不存在",
-		})
+		common.ServerError(ctx, "评论不存在")
 		return
 	}
 
 	// 更新评论状态
 	comment.Status = status
 	if err := database.DB.Save(&comment).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "更新评论状态失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "更新评论状态失败: "+err.Error())
 		return
 	}
 
@@ -265,30 +194,20 @@ func (c *CommentController) AdminReview(ctx *gin.Context) {
 	case 2:
 		statusText = "已拒绝"
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "评论状态已更新为: " + statusText,
-	})
+	common.SuccessWithMessage(ctx, "评论状态已更新为: "+statusText, nil)
 }
 
-// AdminDestroy 删除评论
-func (c *CommentController) AdminDestroy(ctx *gin.Context) {
+// DestroyComment 删除评论
+func (c *CommentController) DestroyComment(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的评论ID",
-		})
+		common.ServerError(ctx, "无效的评论ID")
 		return
 	}
 
 	var comment models.Comment
 	if err := database.DB.First(&comment, id).Error; err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"code": 404,
-			"msg":  "评论不存在",
-		})
+		common.ServerError(ctx, "评论不存在")
 		return
 	}
 
@@ -296,10 +215,7 @@ func (c *CommentController) AdminDestroy(ctx *gin.Context) {
 
 	// 删除评论及其回复
 	if err := database.DB.Where("id = ? OR parent_id = ?", id, id).Delete(&models.Comment{}).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "删除评论失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "删除评论失败: "+err.Error())
 		return
 	}
 
@@ -308,50 +224,36 @@ func (c *CommentController) AdminDestroy(ctx *gin.Context) {
 	database.DB.Model(&models.Comment{}).Where("article_id = ? AND status = ?", articleID, 1).Count(&total)
 	database.DB.Model(&models.Article{}).Where("id = ?", articleID).Update("comment_count", total)
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "评论删除成功",
-	})
+	common.SuccessWithMessage(ctx, "评论删除成功", nil)
+
 }
 
-// AdminBatchReview 批量审核评论
-func (c *CommentController) AdminBatchReview(ctx *gin.Context) {
+// BatchReviewComment 批量审核评论
+func (c *CommentController) BatchReviewComment(ctx *gin.Context) {
 	var req struct {
 		IDs    []uint `json:"ids" binding:"required"`
 		Status int    `json:"status" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "参数错误: " + err.Error(),
-		})
+		common.ServerError(ctx, "参数错误: "+err.Error())
 		return
 	}
 
 	// 验证状态值
 	if req.Status < 0 || req.Status > 2 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "状态值必须是 0(待审核), 1(已通过), 2(已拒绝)",
-		})
+		common.ServerError(ctx, "状态值必须是 0(待审核), 1(已通过), 2(已拒绝)")
 		return
 	}
 
 	if len(req.IDs) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "请选择要操作的评论",
-		})
+		common.ServerError(ctx, "请选择要操作的评论")
 		return
 	}
 
 	// 批量更新状态
 	if err := database.DB.Model(&models.Comment{}).Where("id IN ?", req.IDs).Update("status", req.Status).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "批量更新失败: " + err.Error(),
-		})
+		common.ServerError(ctx, "批量更新失败: "+err.Error())
 		return
 	}
 
@@ -382,9 +284,5 @@ func (c *CommentController) AdminBatchReview(ctx *gin.Context) {
 	case 2:
 		statusText = "已拒绝"
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  fmt.Sprintf("已将 %d 条评论状态更新为: %s", len(req.IDs), statusText),
-	})
+	common.SuccessWithMessage(ctx, fmt.Sprintf("已将 %d 条评论状态更新为: %s", len(req.IDs), statusText), nil)
 }
