@@ -4,7 +4,7 @@
     <div class="page-header">
       <h1 class="page-title">文章管理</h1>
       <el-button type="primary" @click="handleCreate">
-        <el-icon><Plus /></el-icon>
+        <Icon icon="material-symbols:add" />
         新增文章
       </el-button>
     </div>

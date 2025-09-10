@@ -74,7 +74,7 @@ func (t *TagController) DeleteTag(ctx *gin.Context) {
 // TagEnableList 获取启用的标签列表
 func (t *TagController) TagEnableList(ctx *gin.Context) {
 	var tags []models.Tag
-	database.DB.Where("status = ?", models.StatusActive).Find(&tags)
+	database.DB.Find(&tags)
 	common.Success(ctx, tags)
 }
 

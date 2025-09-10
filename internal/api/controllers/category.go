@@ -4,6 +4,7 @@ import (
 	"matuto-blog/internal/database"
 	"matuto-blog/internal/models"
 	"matuto-blog/pkg/common"
+	"matuto-blog/pkg/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -112,7 +113,7 @@ func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 
 	// 生成slug
 	if req.Slug == "" {
-		req.Slug = generateSlug(req.Name)
+		req.Slug = utils.GenerateSlug(req.Name)
 	}
 
 	category := models.Category{
@@ -161,7 +162,7 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 
 	// 生成slug
 	if req.Slug == "" {
-		req.Slug = generateSlug(req.Name)
+		req.Slug = utils.GenerateSlug(req.Name)
 	}
 
 	// 更新字段

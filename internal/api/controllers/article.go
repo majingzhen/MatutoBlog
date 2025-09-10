@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"matuto-blog/pkg/utils"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,16 +20,17 @@ type ArticleController struct{}
 
 // ArticleRequest 文章请求结构
 type ArticleRequest struct {
-	Title      string `json:"title" binding:"required"`
-	Slug       string `json:"slug"`
-	Summary    string `json:"summary"`
-	Content    string `json:"content" binding:"required"`
-	Thumbnail  string `json:"thumbnail"`
-	CategoryID uint   `json:"category_id" binding:"required"`
-	TagIDs     []uint `json:"tag_ids"`
-	IsTop      int8   `json:"is_top"`
-	IsComment  int8   `json:"is_comment"`
-	Status     int8   `json:"status"`
+	Title       string   `json:"title" binding:"required"`
+	Slug        string   `json:"slug"`
+	Summary     string   `json:"summary"`
+	Content     string   `json:"content" binding:"required"`
+	Thumbnail   string   `json:"thumbnail"`
+	CategoryIds []uint64 `json:"categoryIds"`
+	TagIDs      []uint64 `json:"tagIds"`
+	AddTag      []string `json:"addTag"`
+	IsTop       int8     `json:"isTop"`
+	IsComment   int8     `json:"isComment"`
+	Status      int8     `json:"status"`
 }
 
 type ArticlePageRequest struct {
@@ -79,6 +81,41 @@ func (a *ArticleController) ArticlePage(c *gin.Context) {
 	common.SuccessPage(c, articles, total, pageParam.Page, pageParam.PageSize)
 }
 
+// GetArticle 获取文章详情
+func (a *ArticleController) GetArticle(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		common.BadRequest(c, "无效的文章ID")
+		return
+	}
+
+	var article models.Article
+	if err := database.DB.Where("id = ?", id).First(&article).Error; err != nil {
+		common.ServerError(c, "文章不存在")
+		return
+	}
+
+	// 查询关联分类ID，不使用关联查询
+	var categoryIds []uint64
+	database.DB.Model(&models.ArticleCategory{}).
+		Where("article_id = ?", id).
+		Pluck("category_id", &categoryIds)
+
+	// 查询关联标签ID，不使用关联查询
+	var tagIds []uint64
+	database.DB.Model(&models.ArticleTag{}).
+		Where("article_id = ?", id).
+		Pluck("tag_id", &tagIds)
+
+	response := models.ArticleResponse{
+		Article:     article,
+		CategoryIds: categoryIds,
+		TagIds:      tagIds,
+	}
+
+	common.Success(c, response)
+}
+
 // DeleteArticle 删除文章
 func (a *ArticleController) DeleteArticle(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
@@ -87,11 +124,31 @@ func (a *ArticleController) DeleteArticle(c *gin.Context) {
 		return
 	}
 
-	if err := database.DB.Delete(&models.Article{}, id).Error; err != nil {
+	// 开启事务删除文章及其关联
+	tx := database.DB.Begin()
+
+	// 删除文章分类关联
+	if err := tx.Where("article_id = ?", id).Delete(&models.ArticleCategory{}).Error; err != nil {
+		tx.Rollback()
+		common.ServerError(c, "删除文章分类关联失败: "+err.Error())
+		return
+	}
+
+	// 删除文章标签关联
+	if err := tx.Where("article_id = ?", id).Delete(&models.ArticleTag{}).Error; err != nil {
+		tx.Rollback()
+		common.ServerError(c, "删除文章标签关联失败: "+err.Error())
+		return
+	}
+
+	// 删除文章
+	if err := tx.Delete(&models.Article{}, id).Error; err != nil {
+		tx.Rollback()
 		common.ServerError(c, "删除文章失败: "+err.Error())
 		return
 	}
 
+	tx.Commit()
 	common.SuccessWithMessage(c, "文章删除成功", nil)
 }
 
@@ -193,8 +250,8 @@ func (a *ArticleController) Show(c *gin.Context) {
 	})
 }
 
-// AdminStore 保存文章
-func (a *ArticleController) AdminStore(c *gin.Context) {
+// PublishArticle 发布文章
+func (a *ArticleController) PublishArticle(c *gin.Context) {
 	var req ArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.BadRequest(c, "参数错误: "+err.Error())
@@ -203,19 +260,28 @@ func (a *ArticleController) AdminStore(c *gin.Context) {
 
 	// 生成slug
 	if req.Slug == "" {
-		req.Slug = generateSlug(req.Title)
+		req.Slug = utils.GenerateSlug(req.Title)
+	}
+	// 如果addTag不为空，则创建标签
+	if len(req.AddTag) > 0 {
+		var tags []models.Tag
+		for _, tagName := range req.AddTag {
+			tag := models.Tag{
+				Name: tagName,
+			}
+			if err := database.DB.Where("name = ?", tagName).FirstOrCreate(&tag).Error; err != nil {
+				common.ServerError(c, "创建标签失败: "+err.Error())
+				return
+			}
+			tags = append(tags, tag)
+		}
 	}
 
 	// 创建文章
-	article := models.Article{
-		Title:     req.Title,
-		Slug:      req.Slug,
-		Summary:   req.Summary,
-		Content:   req.Content,
-		Thumbnail: req.Thumbnail,
-		IsTop:     req.IsTop,
-		IsComment: req.IsComment,
-		Status:    req.Status,
+	article, err := utils.ConvertTo[models.Article](req)
+	if err != nil {
+		common.ServerError(c, "参数错误: "+err.Error())
+		return
 	}
 
 	if req.Status == 1 {
@@ -239,8 +305,8 @@ func (a *ArticleController) AdminStore(c *gin.Context) {
 	})
 }
 
-// AdminUpdate 更新文章
-func (a *ArticleController) AdminUpdate(c *gin.Context) {
+// UpdateArticle 更新文章
+func (a *ArticleController) UpdateArticle(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		common.BadRequest(c, "无效的文章ID")
@@ -253,25 +319,22 @@ func (a *ArticleController) AdminUpdate(c *gin.Context) {
 		return
 	}
 
-	var article models.Article
-	if err := database.DB.First(&article, id).Error; err != nil {
+	if err := database.DB.First(&models.Article{}, id).Error; err != nil {
 		common.NotFound(c, "文章不存在")
 		return
 	}
 
 	// 生成slug
 	if req.Slug == "" {
-		req.Slug = generateSlug(req.Title)
+		req.Slug = utils.GenerateSlug(req.Title)
 	}
 
 	// 更新文章
-	article.Title = req.Title
-	article.Slug = req.Slug
-	article.Summary = req.Summary
-	article.Content = req.Content
-	article.Thumbnail = req.Thumbnail
-	article.IsTop = req.IsTop
-	article.IsComment = req.IsComment
+	article, err := utils.ConvertTo[models.Article](req)
+	if err != nil {
+		common.ServerError(c, "参数错误: "+err.Error())
+		return
+	}
 
 	// 如果状态从草稿改为已发布，设置发布时间
 	if article.Status == 0 && req.Status == 1 {
@@ -292,12 +355,4 @@ func (a *ArticleController) AdminUpdate(c *gin.Context) {
 	database.DB.Model(&article).Association("Tags").Replace(tags)
 
 	common.SuccessWithMessage(c, "文章更新成功", nil)
-}
-
-// generateSlug 生成文章slug
-func generateSlug(title string) string {
-	// 这里简单处理，实际项目中可能需要更复杂的slug生成逻辑
-	slug := strings.ToLower(title)
-	slug = strings.ReplaceAll(slug, " ", "-")
-	return strconv.FormatInt(time.Now().UnixNano(), 10) // 使用时间戳确保唯一性
 }

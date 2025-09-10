@@ -20,7 +20,7 @@ export function getArticleById(id) {
 // 创建文章
 export function createArticle(data) {
     return request({
-        url: '/articles',
+        url: '/articles/publish',
         method: 'post',
         data
     })
@@ -29,7 +29,7 @@ export function createArticle(data) {
 // 更新文章
 export function updateArticle(id, data) {
     return request({
-        url: `/articles/${id}`,
+        url: `/articles/update/${id}`,
         method: 'put',
         data
     })

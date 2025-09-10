@@ -37,7 +37,7 @@
         <el-menu-item index="/publish" @click="handleMenuClick('/publish')">发布文章</el-menu-item>
       </el-sub-menu>
       <el-menu-item index="/attach" @click="handleMenuClick('/attach')">
-        <el-icon><Document /></el-icon>
+        <Icon icon="material-symbols:attach-file" />
         <template #title>附件管理</template>
       </el-menu-item>
 
@@ -88,5 +88,8 @@ onMounted(() => {
 .sidebar {
   height: 100%;
   overflow-y: auto;
+}
+.el-menu {
+  border-right: none;
 }
 </style>

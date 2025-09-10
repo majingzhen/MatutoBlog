@@ -5,8 +5,25 @@
       <el-page-header @back="handleBack" :content="isEdit ? '编辑文章' : '新建文章'" />
       <div class="header-actions">
         <el-button @click="handlePreview" type="info" plain>
-          <el-icon><View /></el-icon>
+          <Icon icon="mdi:eye" />
           预览
+        </el-button>
+        <el-button 
+          size="default"
+          @click="handleSaveDraft"
+          :loading="saving"
+        >
+          <el-icon><Save /></el-icon>
+          保存草稿
+        </el-button>
+        <el-button 
+          type="primary" 
+          size="default"
+          @click="handlePublish"
+          :loading="submitting"
+        >
+          <el-icon><Upload /></el-icon>
+          {{ isEdit ? '更新文章' : '发布文章' }}
         </el-button>
       </div>
     </div>
@@ -15,7 +32,7 @@
       <!-- 左侧编辑区域 -->
       <div class="editor-main">
         <!-- 标题输入框 -->
-        <el-card class="title-input-card" shadow="never">
+        <div class="title-input-wrapper">
           <el-input
             v-model="article.title"
             placeholder="请输入文章标题"
@@ -25,328 +42,186 @@
             class="title-input"
             @blur="generateSlug"
           />
-        </el-card>
+        </div>
 
-        <!-- Markdown编辑器 -->
-        <el-card class="editor-card" shadow="never">
-          <el-tabs v-model="activeTab" type="card" class="editor-tabs">
-            <el-tab-pane label="编辑" name="edit">
-              <div class="markdown-editor-container">
-                <div class="editor-toolbar">
-                  <el-button-group>
-                    <el-button size="small" @click="insertMarkdown('**', '**')" title="加粗">
-                      <el-icon><bold /></el-icon>
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('*', '*')" title="斜体">
-                      <el-icon><italic /></el-icon>
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('# ', '')" title="标题">
-                      H
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('`', '`')" title="代码">
-                      <el-icon><code /></el-icon>
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('[', '](url)')" title="链接">
-                      <el-icon><link /></el-icon>
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('![', '](image-url)')" title="图片">
-                      <el-icon><picture /></el-icon>
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('- ', '')" title="列表">
-                      <el-icon><list /></el-icon>
-                    </el-button>
-                    <el-button size="small" @click="insertMarkdown('> ', '')" title="引用">
-                      <el-icon><chat-quote-fill /></el-icon>
-                    </el-button>
-                  </el-button-group>
-                  
-                  <el-upload
-                    :action="uploadUrl"
-                    :headers="uploadHeaders"
-                    :show-file-list="false"
-                    :before-upload="beforeImageUpload"
-                    :on-success="handleImageSuccess"
-                    accept="image/*"
-                    style="display: inline-block; margin-left: 10px;"
-                  >
-                    <el-button size="small" type="primary">
-                      <el-icon><upload /></el-icon>
-                      上传图片
-                    </el-button>
-                  </el-upload>
-                </div>
-                
-                <textarea
-                  ref="markdownTextarea"
-                  v-model="article.content"
-                  class="markdown-editor"
-                  placeholder="开始创作你的文章..."
-                  @input="handleContentChange"
-                  @scroll="syncScroll"
-                />
-              </div>
-            </el-tab-pane>
-            
-            <el-tab-pane label="预览" name="preview">
-              <div 
-                ref="previewContainer"
-                class="markdown-preview"
-                v-html="renderedContent"
-                @scroll="syncScroll"
-              />
-            </el-tab-pane>
-            
-            <el-tab-pane label="分屏" name="split">
-              <div class="split-editor">
-                <div class="split-edit">
-                  <div class="editor-toolbar">
-                    <el-button-group>
-                      <el-button size="small" @click="insertMarkdown('**', '**')" title="加粗">
-                        <el-icon><bold /></el-icon>
-                      </el-button>
-                      <el-button size="small" @click="insertMarkdown('*', '*')" title="斜体">
-                        <el-icon><italic /></el-icon>
-                      </el-button>
-                      <el-button size="small" @click="insertMarkdown('# ', '')" title="标题">
-                        H
-                      </el-button>
-                      <el-button size="small" @click="insertMarkdown('`', '`')" title="代码">
-                        <el-icon><code /></el-icon>
-                      </el-button>
-                      <el-button size="small" @click="insertMarkdown('[', '](url)')" title="链接">
-                        <el-icon><link /></el-icon>
-                      </el-button>
-                      <el-button size="small" @click="insertMarkdown('![', '](image-url)')" title="图片">
-                        <el-icon><picture /></el-icon>
-                      </el-button>
-                    </el-button-group>
-                    
-                    <el-upload
-                      :action="uploadUrl"
-                      :headers="uploadHeaders"
-                      :show-file-list="false"
-                      :before-upload="beforeImageUpload"
-                      :on-success="handleImageSuccess"
-                      accept="image/*"
-                      style="display: inline-block; margin-left: 10px;"
-                    >
-                      <el-button size="small" type="primary">
-                        <el-icon><upload /></el-icon>
-                        上传图片
-                      </el-button>
-                    </el-upload>
-                  </div>
-                  <textarea
-                    v-model="article.content"
-                    class="split-textarea"
-                    placeholder="开始创作你的文章..."
-                    @input="handleContentChange"
-                  />
-                </div>
-                <div class="split-preview">
-                  <div class="preview-header">预览</div>
-                  <div 
-                    class="split-preview-content"
-                    v-html="renderedContent"
-                  />
-                </div>
-              </div>
-            </el-tab-pane>
-          </el-tabs>
-        </el-card>
+        <!-- Vditor编辑器 -->
+        <div class="editor-wrapper">
+          <div id="vditor" class="vditor-container"></div>
+        </div>
       </div>
 
       <!-- 右侧配置区域 -->
       <div class="editor-sidebar">
-        <!-- 文章摘要 -->
-        <el-card class="sidebar-card" shadow="never">
-          <template #header>
-            <div class="sidebar-title">
-              <el-icon><Document /></el-icon>
-              <span>文章摘要</span>
+        <!-- 文章配置表单 -->
+        <div class="article-config-form">
+          <div class="config-form-content">
+            <!-- 访问地址别名 -->
+            <div class="form-item">
+              <label class="form-label">访问地址别名</label>
+              <el-input
+                v-model="article.slug"
+                placeholder="请输入访问地址别名"
+                :maxlength="100"
+                size="default"
+              />
             </div>
-          </template>
-          <el-input
-            v-model="article.summary"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入文章摘要..."
-            :maxlength="500"
-            show-word-limit
-          />
-        </el-card>
 
-        <!-- 分类选择 -->
-        <el-card class="sidebar-card" shadow="never">
-          <template #header>
-            <div class="sidebar-title">
-              <el-icon><Folder /></el-icon>
-              <span>文章分类</span>
+            <!-- 分类 -->
+            <div class="form-item">
+              <label class="form-label">分类</label>
+              <el-select
+                v-model="article.categoryId"
+                placeholder="请选择分类"
+                clearable
+                style="width: 100%;"
+              >
+                <el-option
+                  v-for="category in categories"
+                  :key="category.id"
+                  :label="category.name"
+                  :value="category.id"
+                />
+              </el-select>
             </div>
-          </template>
-          <el-select
-            v-model="article.categoryId"
-            placeholder="请选择分类"
-            clearable
-            style="width: 100%;"
-          >
-            <el-option
-              v-for="category in categories"
-              :key="category.id"
-              :label="category.name"
-              :value="category.id"
-            />
-          </el-select>
-        </el-card>
 
-        <!-- 标签选择 -->
-        <el-card class="sidebar-card" shadow="never">
-          <template #header>
-            <div class="sidebar-title">
-              <el-icon><Tags /></el-icon>
-              <span>文章标签</span>
-            </div>
-          </template>
-          <el-select
-            v-model="article.tagIds"
-            multiple
-            placeholder="请选择标签"
-            style="width: 100%;"
-            filterable
-            allow-create
-            :reserve-keyword="false"
-            default-first-option
-          >
-            <el-option
-              v-for="tag in allTags"
-              :key="tag.id"
-              :label="tag.name"
-              :value="tag.id"
-            />
-          </el-select>
-          <p class="tags-hint">提示：可以创建新标签</p>
-        </el-card>
-
-        <!-- 缩略图 -->
-        <el-card class="sidebar-card" shadow="never">
-          <template #header>
-            <div class="sidebar-title">
-              <el-icon><Picture /></el-icon>
-              <span>缩略图</span>
-            </div>
-          </template>
-          <el-upload
-            v-model:file-list="fileList"
-            :action="uploadUrl"
-            :headers="uploadHeaders"
-            :on-success="handleThumbnailSuccess"
-            :on-error="handleUploadError"
-            :before-upload="beforeThumbnailUpload"
-            list-type="picture-card"
-            :limit="1"
-            accept="image/*"
-          >
-            <el-icon><Plus /></el-icon>
-            <template #file="{ file }">
-              <div>
-                <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
-                <span class="el-upload-list__item-actions">
-                  <span class="el-upload-list__item-preview" @click="handlePictureCardPreview(file)">
-                    <el-icon><zoom-in /></el-icon>
-                  </span>
-                  <span class="el-upload-list__item-delete" @click="handleRemove(file)">
-                    <el-icon><Delete /></el-icon>
-                  </span>
-                </span>
+            <!-- 标签 -->
+            <div class="form-item">
+              <label class="form-label">标签</label>
+              <el-select
+                v-model="selectedTags"
+                multiple
+                placeholder="请选择或输入新标签"
+                style="width: 100%;"
+                filterable
+                allow-create
+                :reserve-keyword="false"
+                default-first-option
+                @change="handleTagChange"
+              >
+                <el-option
+                  v-for="tag in allTags"
+                  :key="tag.id"
+                  :label="tag.name"
+                  :value="tag.name"
+                />
+              </el-select>
+              <div v-if="selectedTags.length > 0" class="selected-tags-display">
+                <el-tag 
+                  v-for="tagName in selectedTags" 
+                  :key="tagName" 
+                  class="tag-item-display"
+                  :type="isExistingTag(tagName) ? 'success' : 'info'"
+                  size="small"
+                  closable 
+                  @close="removeTag(tagName)"
+                >
+                  {{ tagName }}
+                  <span v-if="!isExistingTag(tagName)" class="new-tag-indicator"> (新)</span>
+                </el-tag>
               </div>
-            </template>
-          </el-upload>
-        </el-card>
-
-        <!-- SEO设置 -->
-        <el-card class="sidebar-card" shadow="never">
-          <template #header>
-            <div class="sidebar-title">
-              <el-icon><Search /></el-icon>
-              <span>SEO设置</span>
             </div>
-          </template>
-          <el-form label-position="top">
-            <el-form-item label="SEO标题">
+
+            <!-- 文章摘要 -->
+            <div class="form-item">
+              <label class="form-label">文章摘要</label>
               <el-input
-                v-model="article.metaTitle"
-                placeholder="留空将使用文章标题"
-                :maxlength="60"
-                show-word-limit
-              />
-            </el-form-item>
-            <el-form-item label="SEO描述">
-              <el-input
-                v-model="article.metaDescription"
-                placeholder="留空将使用文章摘要"
+                v-model="article.summary"
                 type="textarea"
-                :rows="3"
-                :maxlength="160"
+                :rows="4"
+                placeholder="请输入文章摘要"
+                :maxlength="500"
                 show-word-limit
               />
-            </el-form-item>
-            <el-form-item label="关键词">
+            </div>
+
+            <!-- SEO关键字 -->
+            <div class="form-item">
+              <label class="form-label">SEO关键字</label>
               <el-input
                 v-model="article.metaKeywords"
-                placeholder="用逗号分隔关键词"
+                placeholder="请输入SEO关键字"
                 :maxlength="200"
                 show-word-limit
               />
-            </el-form-item>
-            <el-form-item label="文章别名(Slug)">
+            </div>
+
+            <!-- SEO描述 -->
+            <div class="form-item">
+              <label class="form-label">SEO描述</label>
               <el-input
-                v-model="article.slug"
-                placeholder="文章URL别名"
+                v-model="article.metaDescription"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入SEO描述"
+                :maxlength="160"
+                show-word-limit
+              />
+            </div>
+
+            <!-- 文章标识 -->
+            <div class="form-item">
+              <label class="form-label">文章标识</label>
+              <el-input
+                v-model="article.metaTitle"
+                placeholder="请输入文章标识"
                 :maxlength="100"
               />
-            </el-form-item>
-          </el-form>
-        </el-card>
-
-        <!-- 文章设置 -->
-        <el-card class="sidebar-card" shadow="never">
-          <template #header>
-            <div class="sidebar-title">
-              <el-icon><Setting /></el-icon>
-              <span>文章设置</span>
             </div>
-          </template>
-          <el-form label-position="top">
-            <el-form-item>
-              <el-checkbox v-model="article.isTop">置顶文章</el-checkbox>
-            </el-form-item>
-            <el-form-item>
-              <el-checkbox v-model="article.isComment">允许评论</el-checkbox>
-            </el-form-item>
-          </el-form>
-        </el-card>
 
-        <!-- 操作按钮 -->
-        <div class="action-buttons">
-          <el-button 
-            type="primary" 
-            size="large"
-            class="publish-btn"
-            @click="handlePublish"
-            :loading="submitting"
-          >
-            <el-icon><Upload /></el-icon>
-            {{ isEdit ? '更新文章' : '发布文章' }}
-          </el-button>
-          <el-button 
-            size="large"
-            class="save-btn"
-            @click="handleSaveDraft"
-            :loading="saving"
-          >
-            <el-icon><Save /></el-icon>
-            保存草稿
-          </el-button>
+            <!-- 开关选项 -->
+            <div class="form-item switch-section">
+              <div class="switch-item">
+                <span>
+                  <span class="switch-label">允许评价</span>
+                  <el-switch v-model="article.isComment" />
+                </span>
+
+                <span>
+                  <span class="switch-label">置顶</span>
+                  <el-switch v-model="article.isTop" />
+                </span>
+               <span>
+                  <span class="switch-label">可见</span>
+                  <el-switch v-model="article.isVisible" />
+               </span>
+              </div>
+            </div>
+
+            <!-- 封面图 -->
+            <div class="form-item upload-section">
+              <label class="form-label">封面图</label>
+              <div class="upload-area">
+                <el-upload
+                  v-model:file-list="fileList"
+                  :action="uploadUrl"
+                  :headers="uploadHeaders"
+                  :on-success="handleThumbnailSuccess"
+                  :on-error="handleUploadError"
+                  :before-upload="beforeThumbnailUpload"
+                  list-type="picture-card"
+                  :limit="1"
+                  accept="image/*"
+                  class="thumbnail-upload"
+                >
+                  <el-icon><Plus /></el-icon>
+                  <template #file="{ file }">
+                    <div>
+                      <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+                      <span class="el-upload-list__item-actions">
+                        <span class="el-upload-list__item-preview" @click="handlePictureCardPreview(file)">
+                          <el-icon><zoom-in /></el-icon>
+                        </span>
+                        <span class="el-upload-list__item-delete" @click="handleRemove(file)">
+                          <el-icon><Delete /></el-icon>
+                        </span>
+                      </span>
+                    </div>
+                  </template>
+                </el-upload>
+                <span class="upload-tip">请选择上传封面图片</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -359,37 +234,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   View, Document, Folder, Picture, Search, Setting,
-  Plus, Delete, ZoomIn, Upload,
-   Link, List
+  Plus, Delete, ZoomIn, Upload
 } from '@element-plus/icons-vue'
 
-// 导入markdown渲染库
-import { marked } from 'marked'
-import hljs from 'highlight.js'
-import 'highlight.js/styles/github.css'
+// 导入 Vditor
+import Vditor from 'vditor'
+import 'vditor/dist/index.css'
 
 // 导入API
 import { 
   createArticle, updateArticle, getArticleById,
   getCategoryList, getTagList
 } from '@/api/article.js'
-
-// 初始化marked
-marked.setOptions({
-  highlight: function(code, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang }).value
-    }
-    return hljs.highlightAuto(code).value
-  },
-  breaks: true,
-  gfm: true
-})
 
 const router = useRouter()
 const route = useRoute()
@@ -401,12 +262,9 @@ const isEdit = computed(() => !!route.query.id)
 const submitting = ref(false)
 const saving = ref(false)
 const loading = ref(false)
-const activeTab = ref('edit')
 
-// 编辑器相关
-const markdownTextarea = ref(null)
-const previewContainer = ref(null)
-const renderedContent = ref('')
+// Vditor 编辑器实例
+const vditor = ref(null)
 
 // 文章数据
 const article = reactive({
@@ -420,18 +278,21 @@ const article = reactive({
   type: 'article',
   categoryId: null,
   tagIds: [],
+  addTags: [], // 新增标签名称数组
   thumbnail: '',
   metaTitle: '',
   metaDescription: '',
   metaKeywords: '',
   isTop: false,
   isComment: true,
+  isVisible: true, // 新增可见性字段
   status: 0 // 0: 草稿, 1: 发布
 })
 
 // 分类和标签数据
 const categories = ref([])
 const allTags = ref([])
+const selectedTags = ref([]) // 选中的标签名称数组
 
 // 上传相关
 const uploadUrl = import.meta.env.VITE_APP_UPLOAD_URL || '/api/upload'
@@ -444,73 +305,78 @@ const previewUrl = ref('')
 
 // 渲染Markdown内容
 const renderMarkdown = () => {
-  renderedContent.value = marked.parse(article.content || '')
+  // Vditor 会自动处理内容渲染，这里不需要额外处理
 }
 
 // 处理内容变化
 const handleContentChange = () => {
-  renderMarkdown()
-  article.parseContent = renderedContent.value
+  // Vditor 会自动处理内容变化
 }
 
-// 插入Markdown语法
-const insertMarkdown = (before, after) => {
-  const textarea = markdownTextarea.value
-  if (!textarea) return
-  
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const selectedText = textarea.value.substring(start, end)
-  
-  const newText = before + selectedText + after
-  const newContent = 
-    textarea.value.substring(0, start) + 
-    newText + 
-    textarea.value.substring(end)
-  
-  article.content = newContent
-  handleContentChange()
-  
-  // 恢复光标位置
-  nextTick(() => {
-    textarea.focus()
-    const newCursorPos = start + before.length + selectedText.length
-    textarea.setSelectionRange(newCursorPos, newCursorPos)
+// 初始化 Vditor
+const initVditor = () => {
+  vditor.value = new Vditor('vditor', {
+    height: 750, // 进一步增加编辑器高度
+    mode: 'ir', // 即时渲染模式，无右侧预览
+    placeholder: '请输入文章内容...',
+    theme: 'classic',
+    icon: 'material',
+    upload: {
+      url: uploadUrl,
+      headers: uploadHeaders,
+      accept: 'image/*',
+      success: (editor, response) => {
+        if (response.code === 200) {
+          ElMessage.success('图片上传成功')
+        } else {
+          ElMessage.error(response.message || '上传失败')
+        }
+      },
+      error: (message) => {
+        ElMessage.error('图片上传失败: ' + message)
+      }
+    },
+    after: () => {
+      // 编辑器初始化完成后设置内容
+      if (article.content) {
+        vditor.value.setValue(article.content)
+      }
+    },
+    input: (value) => {
+      // 内容变化时更新数据
+      article.content = value
+      article.parseContent = vditor.value.getHTML()
+    }
   })
 }
 
-// 同步滚动
-const syncScroll = (e) => {
-  const source = e.target
-  const target = activeTab.value === 'edit' ? previewContainer.value : markdownTextarea.value
-  if (target && source.scrollHeight > source.clientHeight) {
-    const scrollRatio = source.scrollTop / (source.scrollHeight - source.clientHeight)
-    target.scrollTop = scrollRatio * (target.scrollHeight - target.clientHeight)
-  }
+// 标签处理相关方法
+const isExistingTag = (tagName) => {
+  return allTags.value.some(tag => tag.name === tagName)
 }
 
-// 图片上传处理
-const beforeImageUpload = (rawFile) => {
-  if (rawFile.type.indexOf('image/') !== 0) {
-    ElMessage.error('只能上传图片文件!')
-    return false
-  }
-  if (rawFile.size / 1024 / 1024 > 10) {
-    ElMessage.error('图片大小不能超过 10MB!')
-    return false
-  }
-  return true
+const handleTagChange = (selectedTagNames) => {
+  selectedTags.value = selectedTagNames
+  // 分离已有标签ID和新标签名称
+  const existingTagIds = []
+  const newTagNames = []
+  
+  selectedTagNames.forEach(tagName => {
+    const existingTag = allTags.value.find(tag => tag.name === tagName)
+    if (existingTag) {
+      existingTagIds.push(existingTag.id)
+    } else {
+      newTagNames.push(tagName)
+    }
+  })
+  
+  article.tagIds = existingTagIds
+  article.addTags = newTagNames
 }
 
-const handleImageSuccess = (response, file) => {
-  if (response.code === 200) {
-    const imageUrl = response.data.url
-    const markdownImage = `![${file.name}](${imageUrl})`
-    insertMarkdown('', markdownImage)
-    ElMessage.success('图片上传成功')
-  } else {
-    ElMessage.error(response.message || '上传失败')
-  }
+const removeTag = (tagName) => {
+  selectedTags.value = selectedTags.value.filter(name => name !== tagName)
+  handleTagChange(selectedTags.value)
 }
 
 // 初始化数据
@@ -555,14 +421,14 @@ const loadArticle = async (id) => {
         slug: data.slug || '',
         summary: data.summary || '',
         content: data.content || '',
-        categoryId: data.category_id,
-        tagIds: data.tag_ids || [],
+        categoryId: data.categoryId,
+        tagIds: data.tagIds || [],
         thumbnail: data.thumbnail || '',
         metaTitle: data.meta_title || '',
         metaDescription: data.meta_description || '',
         metaKeywords: data.meta_keywords || '',
-        isTop: !!data.is_top,
-        isComment: !!data.is_comment,
+        isTop: !!data.isTop,
+        isComment: !!data.isComment,
         status: data.status || 0
       })
       
@@ -575,8 +441,18 @@ const loadArticle = async (id) => {
         }]
       }
       
-      // 渲染内容
-      handleContentChange()
+      // 设置编辑器内容
+      if (vditor.value && data.content) {
+        vditor.value.setValue(data.content)
+      }
+      
+      // 设置选中的标签
+      if (data.tagIds && Array.isArray(data.tagIds)) {
+        selectedTags.value = data.tagIds.map(tagId => {
+          const tag = allTags.value.find(t => t.id === tagId)
+          return tag ? tag.name : ''
+        }).filter(name => name)
+      }
     }
   } catch (error) {
     console.error('加载文章失败:', error)
@@ -606,7 +482,34 @@ const handlePreview = () => {
     ElMessage.warning('请先输入文章内容')
     return
   }
-  window.open(`data:text/html,${encodeURIComponent(renderedContent.value)}`, '_blank')
+  // Vditor 提供内置预览功能
+  if (vditor.value) {
+    const htmlContent = vditor.value.getHTML()
+    const previewWindow = window.open('', '_blank')
+    previewWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>文章预览</title>
+          <meta charset="UTF-8">
+          <style>
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              line-height: 1.6;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${article.title || '无标题'}</h1>
+          <div>${htmlContent}</div>
+        </body>
+      </html>
+    `)
+    previewWindow.document.close()
+  }
 }
 
 // 缩略图上传处理
@@ -656,14 +559,15 @@ const handlePublish = async () => {
       slug: article.slug || generateSlugFromTitle(),
       summary: article.summary,
       content: article.content,
-      category_id: article.categoryId,
-      tag_ids: article.tagIds,
+      categoryId: article.categoryId,
+      tagIds: article.tagIds,
+      add_tags: article.addTags, // 新增的标签名称数组
       thumbnail: article.thumbnail,
       meta_title: article.metaTitle,
       meta_description: article.metaDescription,
       meta_keywords: article.metaKeywords,
-      is_top: article.isTop ? 1 : 0,
-      is_comment: article.isComment ? 1 : 0,
+      isTop: article.isTop ? 1 : 0,
+      isComment: article.isComment ? 1 : 0,
       status: 1 // 发布状态
     }
     
@@ -702,14 +606,15 @@ const handleSaveDraft = async () => {
       slug: article.slug || generateSlugFromTitle(),
       summary: article.summary,
       content: article.content,
-      category_id: article.categoryId,
-      tag_ids: article.tagIds,
+      categoryId: article.categoryId,
+      tagIds: article.tagIds,
+      add_tags: article.addTags, // 新增的标签名称数组
       thumbnail: article.thumbnail,
       meta_title: article.metaTitle,
       meta_description: article.metaDescription,
       meta_keywords: article.metaKeywords,
-      is_top: article.isTop ? 1 : 0,
-      is_comment: article.isComment ? 1 : 0,
+      isTop: article.isTop ? 1 : 0,
+      isComment: article.isComment ? 1 : 0,
       status: 0 // 草稿状态
     }
     
@@ -766,9 +671,20 @@ const generateSlugFromTitle = () => {
 }
 
 // 组件挂载时初始化数据
-onMounted(() => {
-  initData()
-  renderMarkdown()
+onMounted(async () => {
+  await initData()
+  // 延迟初始化编辑器，确保DOM已渲染
+  nextTick(() => {
+    initVditor()
+  })
+})
+
+// 组件卸载时清理编辑器
+onBeforeUnmount(() => {
+  if (vditor.value) {
+    vditor.value.destroy()
+    vditor.value = null
+  }
 })
 </script>
 
@@ -788,259 +704,166 @@ onMounted(() => {
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: center;
 }
 
 .editor-container {
   display: flex;
   gap: 20px;
+  align-items: flex-start; /* 顶部对齐 */
 }
 
 .editor-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.title-input-card {
-  margin-bottom: 15px;
+/* 标题输入框样式 */
+.title-input-wrapper {
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 16px;
 }
 
 .title-input {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
 }
 
 .title-input :deep(.el-input__wrapper) {
   border: none;
   box-shadow: none;
-  padding: 20px 0;
+  padding: 0;
+  background: transparent;
 }
 
 .title-input :deep(.el-input__wrapper:focus-within) {
   box-shadow: none;
 }
 
-.editor-card {
+/* 编辑器包装器 */
+.editor-wrapper {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
   overflow: hidden;
 }
 
-.editor-card :deep(.el-card__body) {
-  padding: 0;
-}
-
-.editor-tabs :deep(.el-tabs__content) {
-  padding: 0;
-}
-
-.markdown-editor-container {
-  position: relative;
-}
-
-.editor-toolbar {
-  padding: 10px 15px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f8fafc;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.markdown-editor {
-  width: 100%;
-  height: 500px;
-  padding: 20px;
-  border: none;
-  resize: none;
-  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  outline: none;
-}
-
-.markdown-preview {
-  padding: 20px;
-  height: 500px;
-  overflow-y: auto;
-  background-color: #fff;
-}
-
-.split-editor {
-  display: flex;
-  height: 500px;
-}
-
-.split-edit {
-  flex: 1;
-  border-right: 1px solid #e5e7eb;
-}
-
-.split-textarea {
-  width: 100%;
-  height: calc(100% - 50px);
-  padding: 15px;
-  border: none;
-  resize: none;
-  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  outline: none;
-}
-
-.split-preview {
-  flex: 1;
-}
-
-.preview-header {
-  padding: 10px 15px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.split-preview-content {
-  padding: 15px;
-  height: calc(100% - 50px);
-  overflow-y: auto;
+.vditor-container {
+  min-height: 700px;
 }
 
 .editor-sidebar {
-  width: 350px;
+  width: 280px;
   flex-shrink: 0;
 }
 
-.sidebar-card {
-  margin-bottom: 20px;
+/* 文章配置表单样式 */
+.article-config-form {
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.sidebar-title {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  color: #1d2129;
+.config-form-content {
+  padding: 20px;
 }
 
-.sidebar-title span {
-  margin-left: 5px;
+.form-item {
+  margin-bottom: 10px;
 }
 
-.tags-hint {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #86909c;
+.form-item:last-child {
   margin-bottom: 0;
 }
 
-.action-buttons {
-  position: sticky;
-  top: 20px;
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+/* 标签显示样式 */
+.selected-tags-display {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-item-display {
+  margin: 0;
+}
+
+/* 开关选项区域 */
+.switch-section {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 0 !important;
+}
+
+.switch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.switch-item:last-child {
+  margin-bottom: 0;
+}
+
+.switch-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+/* 上传区域 */
+.upload-section .upload-area {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px dashed #dcdfe6;
 }
 
-.publish-btn, .save-btn {
-  width: 100%;
+.upload-section {
+  margin-bottom: 0 !important;
 }
 
-/* Markdown预览样式 */
-.markdown-preview :deep(h1),
-.split-preview-content :deep(h1) {
-  font-size: 2em;
-  margin: 0.67em 0;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 0.3em;
+.thumbnail-upload :deep(.el-upload--picture-card) {
+  width: 120px;
+  height: 120px;
+  border: 1px dashed #d9d9d9;
 }
 
-.markdown-preview :deep(h2),
-.split-preview-content :deep(h2) {
-  font-size: 1.5em;
-  margin: 0.83em 0;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 0.3em;
+.thumbnail-upload :deep(.el-upload-list--picture-card .el-upload-list__item) {
+  width: 120px;
+  height: 120px;
 }
 
-.markdown-preview :deep(h3),
-.split-preview-content :deep(h3) {
-  font-size: 1.17em;
-  margin: 1em 0;
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
 }
 
-.markdown-preview :deep(p),
-.split-preview-content :deep(p) {
-  margin: 1em 0;
-  line-height: 1.6;
-}
-
-.markdown-preview :deep(code),
-.split-preview-content :deep(code) {
-  background-color: #f1f3f4;
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
-}
-
-.markdown-preview :deep(pre),
-.split-preview-content :deep(pre) {
-  background-color: #f6f8fa;
-  padding: 1em;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin: 1em 0;
-}
-
-.markdown-preview :deep(pre code),
-.split-preview-content :deep(pre code) {
-  background-color: transparent;
-  padding: 0;
-}
-
-.markdown-preview :deep(blockquote),
-.split-preview-content :deep(blockquote) {
-  border-left: 4px solid #dfe2e5;
-  padding-left: 1em;
-  margin: 1em 0;
-  color: #6a737d;
-}
-
-.markdown-preview :deep(ul),
-.markdown-preview :deep(ol),
-.split-preview-content :deep(ul),
-.split-preview-content :deep(ol) {
-  margin: 1em 0;
-  padding-left: 2em;
-}
-
-.markdown-preview :deep(table),
-.split-preview-content :deep(table) {
-  border-collapse: collapse;
-  margin: 1em 0;
-  width: 100%;
-}
-
-.markdown-preview :deep(th),
-.markdown-preview :deep(td),
-.split-preview-content :deep(th),
-.split-preview-content :deep(td) {
-  border: 1px solid #d0d7de;
-  padding: 0.5em;
-}
-
-.markdown-preview :deep(th),
-.split-preview-content :deep(th) {
-  background-color: #f6f8fa;
-  font-weight: 600;
-}
-
-/* 上传组件样式 */
-:deep(.el-upload--picture-card) {
-  width: 100px;
-  height: 100px;
-}
-
-:deep(.el-upload-list--picture-card .el-upload-list__item) {
-  width: 100px;
-  height: 100px;
+.new-tag-indicator {
+  font-size: 10px;
+  opacity: 0.8;
 }
 
 /* 响应式调整 */
@@ -1053,9 +876,9 @@ onMounted(() => {
     width: 100%;
   }
   
-  .action-buttons {
-    position: static;
-    flex-direction: row;
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
@@ -1070,17 +893,25 @@ onMounted(() => {
     gap: 15px;
   }
   
-  .action-buttons {
-    flex-direction: column;
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
   
-  .split-editor {
-    flex-direction: column;
+  .vditor-container {
+    min-height: 500px;
   }
   
-  .split-edit {
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+  .editor-container {
+    gap: 12px;
+  }
+  
+  .config-form-content {
+    padding: 16px;
+  }
+  
+  .form-item {
+    margin-bottom: 16px;
   }
 }
 </style>

@@ -90,9 +90,10 @@ func InitRoutes() *gin.Engine {
 			articles := apiAuth.Group("/articles")
 			{
 				articles.GET("/page", articleController.ArticlePage)
+				articles.GET("/:id", articleController.GetArticle)
 				articles.DELETE("/:id", articleController.DeleteArticle)
-				articles.POST("/create", articleController.AdminStore)
-				articles.PUT("/:id", articleController.AdminUpdate)
+				articles.POST("/publish", articleController.PublishArticle)
+				articles.PUT("/update/:id", articleController.UpdateArticle)
 			}
 			// 分类管理
 			categories := apiAuth.Group("/categories")

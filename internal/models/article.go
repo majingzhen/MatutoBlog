@@ -21,7 +21,6 @@ type Article struct {
 	Flag            string `json:"flag" gorm:"size:256;comment:标识"`
 	Template        string `json:"template" gorm:"size:256;comment:模板"`
 	Visibility      int8   `json:"visibility" gorm:"default:0;comment:是否可见, 0是, 1否"`
-	Tags            []*Tag `json:"tags" gorm:"many2many:m_article_tag;"`
 }
 
 // TableName 指定表名
@@ -70,4 +69,11 @@ func (a *Article) IsVisible() bool {
 // IsTopArticle 检查文章是否置顶
 func (a *Article) IsTopArticle() bool {
 	return a.IsTop == 1
+}
+
+// ArticleResponse 文章响应结构体
+type ArticleResponse struct {
+	Article
+	CategoryIds []uint64 `json:"categoryIds"`
+	TagIds      []uint64 `json:"tagIds"`
 }
