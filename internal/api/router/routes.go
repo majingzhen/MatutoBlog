@@ -47,12 +47,6 @@ func InitRoutes() *gin.Engine {
 		// 首页
 		frontend.GET("", articleController.Index)
 
-		frontend.GET("/test", func(c *gin.Context) {
-			c.HTML(200, "default/test/test.html", gin.H{
-				"title": "博客首页",
-			})
-		})
-
 		// 文章详情
 		frontend.GET("/article/:id", articleController.Show)
 

@@ -46,6 +46,12 @@ type ArticleResponse struct {
 	TagIds      []int `json:"tagIds"`
 }
 
+type ArticleViewResponse struct {
+	models.Article
+	Categories []models.Category `json:"categories"`
+	Tags       []models.Tag      `json:"tags"`
+}
+
 type ArticlePageRequest struct {
 	common.PageRequest
 	CategoryID uint   `json:"categoryId" form:"categoryId"`
@@ -175,32 +181,43 @@ func (a *ArticleController) Index(c *gin.Context) {
 
 	var articles []models.Article
 	var total int64
-
-	query := database.DB.Model(&models.Article{}).
-		Preload("Category").
-		Preload("Tags").
-		Where("status = ?", 1)
-
+	query := database.DB.Model(&models.Article{})
 	if categoryID > 0 {
-		query = query.Where("category_id = ?", categoryID)
+		query = query.Joins("left join m_article_category ac ON m_article.id = ac.article_id").
+			Where("ac.category_id = ?", categoryID)
 	}
-
 	if tagID > 0 {
-		query = query.Joins("JOIN article_tags ON articles.id = article_tags.article_id").
-			Where("article_tags.tag_id = ?", tagID)
+		query = query.Joins("left join m_article_tags at ON m_article.id = at.article_id").
+			Where("at.tag_id = ?", tagID)
 	}
-
 	if keyword != "" {
 		query = query.Where("title LIKE ? OR content LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
-
+	query.Order("m_article.is_top DESC, m_article.created_at DESC")
 	query.Count(&total)
 
 	offset := (page - 1) * pageSize
-	query.Order("is_top DESC, created_at DESC").
-		Limit(pageSize).
+	query.Limit(pageSize).
 		Offset(offset).
 		Find(&articles)
+	// 获取文章和分类、标签的关联
+	articleResArray, err := utils.ConvertSliceTo[ArticleViewResponse](articles)
+	if err != nil {
+		common.ServerError(c, "参数错误: "+err.Error())
+		return
+	}
+	for i := range articleResArray {
+		var categories []models.Category
+		database.DB.Joins("JOIN m_article_category ac ON m_category.id = ac.category_id").
+			Where("ac.article_id = ?", articles[i].Id).
+			Find(&categories)
+		articleResArray[i].Categories = categories
+		var tags []models.Tag
+		database.DB.Joins("JOIN m_article_tag at ON m_tag.id = at.tag_id").
+			Where("at.article_id = ?", articles[i].Id).
+			Find(&tags)
+		articleResArray[i].Tags = tags
+	}
 
 	// 获取分类列表
 	var categories []models.Category
@@ -211,7 +228,7 @@ func (a *ArticleController) Index(c *gin.Context) {
 	database.DB.Find(&tags)
 
 	c.HTML(http.StatusOK, "default/index.html", gin.H{
-		"articles":   articles,
+		"articles":   articleResArray,
 		"categories": categories,
 		"tags":       tags,
 		"pagination": gin.H{
@@ -236,16 +253,9 @@ func (a *ArticleController) Show(c *gin.Context) {
 		return
 	}
 
-	var article models.Article
+	var article ArticleViewResponse
 	if err := database.DB.Preload("Category").
-		Preload("Tags").
-		Preload("Comments", func(db *gorm.DB) *gorm.DB {
-			return db.Where("status = ? AND parent_id = ?", 1, 0).Order("created_at DESC")
-		}).
-		Preload("Comments.Children", func(db *gorm.DB) *gorm.DB {
-			return db.Where("status = ?", 1).Order("created_at ASC")
-		}).
-		Where("id = ? AND status = ?", id, 1).
+		Where("id = ?", id).
 		First(&article).Error; err != nil {
 		c.HTML(http.StatusNotFound, "error/error.html", gin.H{
 			"message": "文章不存在",
