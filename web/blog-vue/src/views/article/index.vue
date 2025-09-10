@@ -26,23 +26,6 @@
             @clear="handleSearch"
           />
         </el-form-item>
-        
-        <el-form-item label="分类">
-          <el-select
-            v-model="searchForm.categoryId"
-            placeholder="请选择分类"
-            clearable
-            style="width: 150px"
-            @change="handleSearch"
-          >
-            <el-option
-              v-for="category in categories"
-              :key="category.id"
-              :label="category.name"
-              :value="category.id"
-            />
-          </el-select>
-        </el-form-item>
 
         <el-form-item label="状态">
           <el-select

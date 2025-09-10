@@ -70,10 +70,3 @@ func (a *Article) IsVisible() bool {
 func (a *Article) IsTopArticle() bool {
 	return a.IsTop == 1
 }
-
-// ArticleResponse 文章响应结构体
-type ArticleResponse struct {
-	Article
-	CategoryIds []uint64 `json:"categoryIds"`
-	TagIds      []uint64 `json:"tagIds"`
-}

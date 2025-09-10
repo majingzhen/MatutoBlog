@@ -70,7 +70,8 @@
             <div class="form-item">
               <label class="form-label">分类</label>
               <el-select
-                v-model="article.categoryId"
+                v-model="article.categoryIds"
+                multiple
                 placeholder="请选择分类"
                 clearable
                 style="width: 100%;"
@@ -276,7 +277,7 @@ const article = reactive({
   parseContent: '',
   contentModel: 'markdown',
   type: 'article',
-  categoryId: null,
+  categoryIds: [],
   tagIds: [],
   addTags: [], // 新增标签名称数组
   thumbnail: '',
@@ -295,7 +296,7 @@ const allTags = ref([])
 const selectedTags = ref([]) // 选中的标签名称数组
 
 // 上传相关
-const uploadUrl = import.meta.env.VITE_APP_UPLOAD_URL || '/api/upload'
+const uploadUrl = import.meta.env.VITE_API_UPDATE_URL || '/api/upload'
 const uploadHeaders = {
   'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 }
@@ -324,16 +325,40 @@ const initVditor = () => {
     upload: {
       url: uploadUrl,
       headers: uploadHeaders,
+      fieldName: 'file',
       accept: 'image/*',
-      success: (editor, response) => {
-        if (response.code === 200) {
-          ElMessage.success('图片上传成功')
-        } else {
-          ElMessage.error(response.message || '上传失败')
+      multiple: false,
+      linkToImgFormat(responseText) {
+        let result = null;
+        let res = JSON.parse(responseText);
+        if (res && res.code === 200) {
+          result = JSON.stringify({
+            msg: '',
+            code: 0,
+            data : {
+              originalURL: res.data.name,
+              url: res.data.url,
+            }
+          })
         }
+        return result;
       },
-      error: (message) => {
-        ElMessage.error('图片上传失败: ' + message)
+      format(files, responseText) {
+        let result = null;
+        let res = JSON.parse(responseText);
+        if (res && res.code === 200) {
+          result = JSON.stringify({
+            msg: '',
+            code: 0,
+            data : {
+              errFiles: [],
+              succMap: {
+                [res.data.name]: res.data.url,
+              }
+            }
+          });
+        }
+        return result;
       }
     },
     after: () => {
@@ -421,12 +446,12 @@ const loadArticle = async (id) => {
         slug: data.slug || '',
         summary: data.summary || '',
         content: data.content || '',
-        categoryId: data.categoryId,
+        categoryIds: data.categoryIds,
         tagIds: data.tagIds || [],
         thumbnail: data.thumbnail || '',
-        metaTitle: data.meta_title || '',
-        metaDescription: data.meta_description || '',
-        metaKeywords: data.meta_keywords || '',
+        metaTitle: data.metaTitle || '',
+        metaDescription: data.metaDescription || '',
+        metaKeywords: data.metaKeywords || '',
         isTop: !!data.isTop,
         isComment: !!data.isComment,
         status: data.status || 0
@@ -555,25 +580,26 @@ const handlePublish = async () => {
   submitting.value = true
   try {
     const data = {
+      id: article.id,
       title: article.title,
       slug: article.slug || generateSlugFromTitle(),
       summary: article.summary,
       content: article.content,
-      categoryId: article.categoryId,
+      categoryIds: article.categoryIds,
       tagIds: article.tagIds,
-      add_tags: article.addTags, // 新增的标签名称数组
+      addTags: article.addTags, // 新增的标签名称数组
       thumbnail: article.thumbnail,
-      meta_title: article.metaTitle,
-      meta_description: article.metaDescription,
-      meta_keywords: article.metaKeywords,
+      metaTitle: article.metaTitle,
+      metaDescription: article.metaDescription,
+      metaKeywords: article.metaKeywords,
       isTop: article.isTop ? 1 : 0,
       isComment: article.isComment ? 1 : 0,
-      status: 1 // 发布状态
+      status: 0 // 发布状态
     }
     
     let response
     if (isEdit.value) {
-      response = await updateArticle(article.id, data)
+      response = await updateArticle(data)
     } else {
       response = await createArticle(data)
     }
@@ -602,25 +628,26 @@ const handleSaveDraft = async () => {
   saving.value = true
   try {
     const data = {
+      id: article.id,
       title: article.title,
       slug: article.slug || generateSlugFromTitle(),
       summary: article.summary,
       content: article.content,
-      categoryId: article.categoryId,
+      categoryIds: article.categoryIds,
       tagIds: article.tagIds,
-      add_tags: article.addTags, // 新增的标签名称数组
+      addTags: article.addTags, // 新增的标签名称数组
       thumbnail: article.thumbnail,
-      meta_title: article.metaTitle,
-      meta_description: article.metaDescription,
-      meta_keywords: article.metaKeywords,
+      metaTitle: article.metaTitle,
+      metaDescription: article.metaDescription,
+      metaKeywords: article.metaKeywords,
       isTop: article.isTop ? 1 : 0,
       isComment: article.isComment ? 1 : 0,
-      status: 0 // 草稿状态
+      status: 1 // 草稿状态
     }
     
     let response
     if (isEdit.value) {
-      response = await updateArticle(article.id, data)
+      response = await updateArticle(data)
     } else {
       response = await createArticle(data)
     }
@@ -629,7 +656,7 @@ const handleSaveDraft = async () => {
       ElMessage.success('草稿保存成功')
       if (!isEdit.value && response.data.id) {
         article.id = response.data.id
-        router.replace({ path: '/publish', query: { id: response.data.id } })
+        router.replace({ path: '/article', query: { id: response.data.id } })
       }
     } else {
       ElMessage.error(response.message || '保存失败')
@@ -651,11 +678,6 @@ const validateArticle = () => {
   
   if (!article.content.trim()) {
     ElMessage.warning('请输入文章内容')
-    return false
-  }
-  
-  if (!article.categoryId) {
-    ElMessage.warning('请选择文章分类')
     return false
   }
   

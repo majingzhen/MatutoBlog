@@ -20,17 +20,30 @@ type ArticleController struct{}
 
 // ArticleRequest 文章请求结构
 type ArticleRequest struct {
-	Title       string   `json:"title" binding:"required"`
-	Slug        string   `json:"slug"`
-	Summary     string   `json:"summary"`
-	Content     string   `json:"content" binding:"required"`
-	Thumbnail   string   `json:"thumbnail"`
-	CategoryIds []uint64 `json:"categoryIds"`
-	TagIDs      []uint64 `json:"tagIds"`
-	AddTag      []string `json:"addTag"`
-	IsTop       int8     `json:"isTop"`
-	IsComment   int8     `json:"isComment"`
-	Status      int8     `json:"status"`
+	Id              int      `json:"id"`
+	Title           string   `json:"title" binding:"required"`
+	Slug            string   `json:"slug"`
+	Summary         string   `json:"summary"`
+	Content         string   `json:"content" binding:"required"`
+	Thumbnail       string   `json:"thumbnail"`
+	CategoryIds     []int    `json:"categoryIds"`
+	MetaTitle       string   `json:"metaTitle"`
+	MetaKeywords    string   `json:"metaKeywords"`
+	MetaDescription string   `json:"metaDescription"`
+	ContentModel    string   `json:"contentModel"`
+	Type            string   `json:"type"`
+	TagIDs          []int    `json:"tagIds"`
+	AddTags         []string `json:"addTags"`
+	IsTop           int8     `json:"isTop"`
+	IsComment       int8     `json:"isComment"`
+	Status          int8     `json:"status"`
+}
+
+// ArticleResponse 文章响应结构
+type ArticleResponse struct {
+	models.Article
+	CategoryIds []int `json:"categoryIds"`
+	TagIds      []int `json:"tagIds"`
 }
 
 type ArticlePageRequest struct {
@@ -96,18 +109,18 @@ func (a *ArticleController) GetArticle(c *gin.Context) {
 	}
 
 	// 查询关联分类ID，不使用关联查询
-	var categoryIds []uint64
+	var categoryIds []int
 	database.DB.Model(&models.ArticleCategory{}).
 		Where("article_id = ?", id).
 		Pluck("category_id", &categoryIds)
 
 	// 查询关联标签ID，不使用关联查询
-	var tagIds []uint64
+	var tagIds []int
 	database.DB.Model(&models.ArticleTag{}).
 		Where("article_id = ?", id).
 		Pluck("tag_id", &tagIds)
 
-	response := models.ArticleResponse{
+	response := ArticleResponse{
 		Article:     article,
 		CategoryIds: categoryIds,
 		TagIds:      tagIds,
@@ -257,15 +270,15 @@ func (a *ArticleController) PublishArticle(c *gin.Context) {
 		common.BadRequest(c, "参数错误: "+err.Error())
 		return
 	}
+	tagIds := req.TagIDs
 
 	// 生成slug
 	if req.Slug == "" {
 		req.Slug = utils.GenerateSlug(req.Title)
 	}
 	// 如果addTag不为空，则创建标签
-	if len(req.AddTag) > 0 {
-		var tags []models.Tag
-		for _, tagName := range req.AddTag {
+	if len(req.AddTags) > 0 {
+		for _, tagName := range req.AddTags {
 			tag := models.Tag{
 				Name: tagName,
 			}
@@ -273,7 +286,7 @@ func (a *ArticleController) PublishArticle(c *gin.Context) {
 				common.ServerError(c, "创建标签失败: "+err.Error())
 				return
 			}
-			tags = append(tags, tag)
+			tagIds = append(tagIds, tag.Id)
 		}
 	}
 
@@ -294,10 +307,32 @@ func (a *ArticleController) PublishArticle(c *gin.Context) {
 	}
 
 	// 关联标签
-	if len(req.TagIDs) > 0 {
-		var tags []models.Tag
-		database.DB.Where("id IN ?", req.TagIDs).Find(&tags)
-		database.DB.Model(&article).Association("Tags").Replace(tags)
+	if len(tagIds) > 0 {
+		var tags []models.ArticleTag
+		for _, tagID := range tagIds {
+			tags = append(tags, models.ArticleTag{
+				ArticleId: article.Id,
+				TagId:     tagID,
+			})
+		}
+		if err := database.DB.Create(&tags).Error; err != nil {
+			common.ServerError(c, "关联标签失败: "+err.Error())
+			return
+		}
+	}
+	// 关联分类
+	if len(req.CategoryIds) > 0 {
+		var categories []models.ArticleCategory
+		for _, categoryID := range req.CategoryIds {
+			categories = append(categories, models.ArticleCategory{
+				ArticleId:  article.Id,
+				CategoryId: categoryID,
+			})
+		}
+		if err := database.DB.Create(&categories).Error; err != nil {
+			common.ServerError(c, "关联分类失败: "+err.Error())
+			return
+		}
 	}
 
 	common.Success(c, gin.H{
@@ -307,19 +342,13 @@ func (a *ArticleController) PublishArticle(c *gin.Context) {
 
 // UpdateArticle 更新文章
 func (a *ArticleController) UpdateArticle(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		common.BadRequest(c, "无效的文章ID")
-		return
-	}
-
 	var req ArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.BadRequest(c, "参数错误: "+err.Error())
 		return
 	}
 
-	if err := database.DB.First(&models.Article{}, id).Error; err != nil {
+	if err := database.DB.First(&models.Article{}, req.Id).Error; err != nil {
 		common.NotFound(c, "文章不存在")
 		return
 	}
@@ -335,7 +364,6 @@ func (a *ArticleController) UpdateArticle(c *gin.Context) {
 		common.ServerError(c, "参数错误: "+err.Error())
 		return
 	}
-
 	// 如果状态从草稿改为已发布，设置发布时间
 	if article.Status == 0 && req.Status == 1 {
 		article.CreatedAt = time.Now()
@@ -346,13 +374,59 @@ func (a *ArticleController) UpdateArticle(c *gin.Context) {
 		common.ServerError(c, "更新文章失败: "+err.Error())
 		return
 	}
-
-	// 更新标签关联
-	var tags []models.Tag
-	if len(req.TagIDs) > 0 {
-		database.DB.Where("id IN ?", req.TagIDs).Find(&tags)
+	tagIds := req.TagIDs
+	// 如果addTag不为空，则创建标签
+	if len(req.AddTags) > 0 {
+		for _, tagName := range req.AddTags {
+			tag := models.Tag{
+				Name: tagName,
+			}
+			if err := database.DB.Where("name = ?", tagName).FirstOrCreate(&tag).Error; err != nil {
+				common.ServerError(c, "创建标签失败: "+err.Error())
+				return
+			}
+			tagIds = append(tagIds, tag.Id)
+		}
 	}
-	database.DB.Model(&article).Association("Tags").Replace(tags)
+	// 删除旧的标签关联
+	if err := database.DB.Where("article_id = ?", req.Id).Delete(&models.ArticleTag{}).Error; err != nil {
+		common.ServerError(c, "删除旧标签关联失败: "+err.Error())
+		return
+	}
+	// 删除旧的分类关联
+	if err := database.DB.Where("article_id = ?", req.Id).Delete(&models.ArticleCategory{}).Error; err != nil {
+		common.ServerError(c, "删除旧分类关联失败: "+err.Error())
+		return
+	}
+
+	// 关联标签
+	if len(tagIds) > 0 {
+		var tags []models.ArticleTag
+		for _, tagID := range tagIds {
+			tags = append(tags, models.ArticleTag{
+				ArticleId: article.Id,
+				TagId:     tagID,
+			})
+		}
+		if err := database.DB.Create(&tags).Error; err != nil {
+			common.ServerError(c, "关联标签失败: "+err.Error())
+			return
+		}
+	}
+	// 关联分类
+	if len(req.CategoryIds) > 0 {
+		var categories []models.ArticleCategory
+		for _, categoryID := range req.CategoryIds {
+			categories = append(categories, models.ArticleCategory{
+				ArticleId:  article.Id,
+				CategoryId: categoryID,
+			})
+		}
+		if err := database.DB.Create(&categories).Error; err != nil {
+			common.ServerError(c, "关联分类失败: "+err.Error())
+			return
+		}
+	}
 
 	common.SuccessWithMessage(c, "文章更新成功", nil)
 }

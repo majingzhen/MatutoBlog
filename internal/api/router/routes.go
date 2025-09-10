@@ -93,7 +93,7 @@ func InitRoutes() *gin.Engine {
 				articles.GET("/:id", articleController.GetArticle)
 				articles.DELETE("/:id", articleController.DeleteArticle)
 				articles.POST("/publish", articleController.PublishArticle)
-				articles.PUT("/update/:id", articleController.UpdateArticle)
+				articles.PUT("/update", articleController.UpdateArticle)
 			}
 			// 分类管理
 			categories := apiAuth.Group("/categories")
