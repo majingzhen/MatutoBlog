@@ -1,8 +1,13 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 	"html/template"
 	"os"
 	"path/filepath"
@@ -25,6 +30,24 @@ func NewTemplateManager(templateDir string, templateNames []string) *TemplateMan
 
 // GenTemplateFuncMap 添加自定义模板函数
 func GenTemplateFuncMap() template.FuncMap {
+	// 配置Markdown渲染器
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,           // 支持GitHub Flavored Markdown
+			extension.Table,         // 支持表格
+			extension.Strikethrough, // 支持删除线
+			extension.Linkify,       // 自动链接
+			extension.TaskList,      // 支持任务列表
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(), // 自动生成标题ID
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(), // 硬换行
+			html.WithXHTML(),     // XHTML兼容
+		),
+	)
+
 	return template.FuncMap{
 		"add": func(a, b int) int {
 			return a + b
@@ -42,6 +65,18 @@ func GenTemplateFuncMap() template.FuncMap {
 		"formatDate": func(t interface{}) string {
 			// 这里可以添加日期格式化逻辑
 			return fmt.Sprintf("%v", t)
+		},
+		// 添加Markdown渲染函数
+		"markdown": func(content string) template.HTML {
+			var buf bytes.Buffer
+			if err := md.Convert([]byte(content), &buf); err != nil {
+				return template.HTML(content) // 如果转换失败，返回原始内容
+			}
+			return template.HTML(buf.String())
+		},
+		// 添加安全的HTML渲染函数
+		"safeHTML": func(content string) template.HTML {
+			return template.HTML(content)
 		},
 	}
 }
