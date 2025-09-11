@@ -155,20 +155,22 @@
           <article class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
             <div class="p-6 md:p-8">
               <div class="flex items-center space-x-2 mb-4">
+                {{range .article.Categories}}
                 <span
                   class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800"
                 >
-                  Web开发
+                  {{.Name}}
                 </span>
+                {{end}}
                 <span class="text-xs text-gray-500">
                   <i class="far fa-clock mr-1"> </i>
-                  2023-06-15
+                  {{.article.CreatedAt.Format "2006-01-02"}}
                 </span>
               </div>
               <h1
                 class="text-3xl md:text-4xl font-bold text-dark mb-6 leading-tight"
               >
-                现代前端开发：2023年必备技术栈
+                {{.article.Title}}
               </h1>
               <!-- 作者信息 -->
               <div class="flex items-center mb-8">
@@ -197,146 +199,31 @@
                 </div>
               </div>
               <!-- 文章封面图 -->
+              {{if .article.Thumbnail}}
               <div class="mb-8 rounded-xl overflow-hidden">
                 <img
-                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/ff3d13123209834e14633bfd08512e8f.png"
-                  alt="文章封面图"
+                  src="{{.article.Thumbnail}}"
+                  alt="{{.article.Title}}"
                   class="w-full h-auto object-cover"
                 />
               </div>
+              {{end}}
               <!-- 文章内容 -->
               <div class="article-content">
-                <p>
-                  随着Web技术的快速发展，前端开发领域也在不断演进。本文将介绍2023年前端开发的必备技术栈，包括框架选择、构建工具、状态管理等方面的最新趋势和最佳实践。
-                </p>
-                <h2>前端框架的选择</h2>
-                <p>
-                  2023年，前端框架市场依然由三大主流框架主导，但它们各自的生态和应用场景有了更清晰的划分：
-                </p>
-                <h3>React</h3>
-                <p>
-                  React继续保持其市场领先地位，特别是在大型企业应用中。其组件化思想和虚拟DOM机制使其成为构建复杂交互界面的理想选择。
-                </p>
-                <blockquote>
-                  React的灵活性既是其优势也是挑战，它允许开发者以多种方式解决问题，但也需要团队建立良好的开发规范。
-                </blockquote>
-                <h3>Vue</h3>
-                <p>
-                  Vue凭借其易学性和出色的文档，成为初学者和中小型项目的首选。Vue
-                  3引入的Composition API进一步增强了其在复杂应用中的竞争力。
-                </p>
-                <h3>Svelte</h3>
-                <p>
-                  Svelte作为后起之秀，通过其编译时优化策略，生成高效的原生JavaScript代码，在性能敏感的应用中表现出色。
-                </p>
-                <h2>构建工具与开发环境</h2>
-                <p>
-                  构建工具领域在2023年经历了显著变化，Vite的崛起挑战了Webpack的统治地位：
-                </p>
-                <ul>
-                  <li>
-                    <strong> Vite </strong>
-                    ：基于ES模块的开发服务器，提供极速的热模块替换(HMR)，成为新项目的首选构建工具。
-                  </li>
-                  <li>
-                    <strong> Turbopack </strong>
-                    ：Webpack的继任者，由Webpack创始人开发，承诺比Vite更快的构建速度。
-                  </li>
-                  <li>
-                    <strong> esbuild </strong>
-                    ：Go语言编写的JavaScript打包器，以其惊人的速度被广泛用于开发工具链中。
-                  </li>
-                </ul>
-                <h2>样式解决方案</h2>
-                <p>
-                  CSS的发展也呈现多元化趋势，以下是2023年最受欢迎的样式解决方案：
-                </p>
-                <h3>Tailwind CSS</h3>
-                <p>
-                  实用优先的CSS框架，通过预定义的原子类加速UI开发，成为许多团队的首选。
-                </p>
-                <h3>CSS-in-JS</h3>
-                <p>
-                  Styled
-                  Components和Emotion等库继续在React生态中流行，提供组件级的样式封装。
-                </p>
-                <h3>CSS Modules</h3>
-                <p>
-                  一种本地化CSS的解决方案，无需额外依赖，简单高效，适合中小型项目。
-                </p>
-                <h2>状态管理与数据流</h2>
-                <p>随着应用复杂度的提升，有效的状态管理变得至关重要：</p>
-                <ul>
-                  <li>
-                    <strong> Redux Toolkit </strong>
-                    ：Redux的官方工具集，简化了Redux的使用，减少了样板代码。
-                  </li>
-                  <li>
-                    <strong> Zustand </strong>
-                    ：轻量级状态管理库，API简洁，学习曲线平缓。
-                  </li>
-                  <li>
-                    <strong> Jotai/Recoil </strong>
-                    ：原子化状态管理，适合构建复杂的状态依赖关系。
-                  </li>
-                </ul>
-                <blockquote>
-                  选择状态管理方案时，应考虑项目规模、团队熟悉度和性能需求，避免过度设计。
-                </blockquote>
-                <h2>未来趋势与展望</h2>
-                <p>展望未来，前端开发将继续朝着以下方向发展：</p>
-                <h3>Web Assembly</h3>
-                <p>
-                  Wasm将允许开发者使用其他语言编写高性能组件，进一步拓展Web平台的能力边界。
-                </p>
-                <h3>Server Components</h3>
-                <p>
-                  React Server
-                  Components等技术将重新定义前后端边界，优化首屏加载性能。
-                </p>
-                <h3>AI辅助开发</h3>
-                <p>
-                  AI工具如GitHub
-                  Copilot将成为开发者的得力助手，提高开发效率和代码质量。
-                </p>
-                <p>
-                  总之，2023年的前端开发领域充满活力和机遇。作为开发者，我们需要保持学习的热情，不断适应新技术和新趋势，才能在快速变化的环境中保持竞争力。
-                </p>
+                {{.article.Content}}
               </div>
               <!-- 文章标签 -->
               <div class="mt-12 pt-6 border-t border-gray-100">
                 <h3 class="text-lg font-bold mb-4">文章标签</h3>
                 <div class="flex flex-wrap gap-2">
+                  {{range .article.Tags}}
                   <a
-                    href="javascript:void(0);"
+                    href="/tag/{{.Id}}"
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
                   >
-                    #JavaScript
+                    #{{.Name}}
                   </a>
-                  <a
-                    href="javascript:void(0);"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
-                  >
-                    #前端开发
-                  </a>
-                  <a
-                    href="javascript:void(0);"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
-                  >
-                    #技术趋势
-                  </a>
-                  <a
-                    href="javascript:void(0);"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
-                  >
-                    #React
-                  </a>
-                  <a
-                    href="javascript:void(0);"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
-                  >
-                    #Vue
-                  </a>
+                  {{end}}
                 </div>
               </div>
               <!-- 文章底部操作 -->
@@ -347,7 +234,7 @@
                   class="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-custom w-full sm:w-auto justify-center"
                 >
                   <i class="far fa-thumbs-up text-gray-600"> </i>
-                  <span> 点赞 (128) </span>
+                  <span> 点赞 ({{.article.GreatCount}}) </span>
                 </button>
                 <div
                   class="flex space-x-3 w-full sm:w-auto justify-center sm:justify-end"

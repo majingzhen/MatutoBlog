@@ -53,6 +53,9 @@ func InitRoutes() *gin.Engine {
 		// 分类页面
 		frontend.GET("/category/:id", articleController.Index)
 
+		// 分类列表页面
+		frontend.GET("/categories", categoryController.CategoryListPage)
+
 		// 标签页面
 		frontend.GET("/tag/:id", articleController.Index)
 

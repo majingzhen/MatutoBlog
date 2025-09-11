@@ -72,7 +72,7 @@
                     分类
                 </a>
                 <a
-                        href="/hot"
+                        href="/?sort=hot"
                         class="text-dark hover:text-primary font-medium transition-custom"
                 >
                     热门
@@ -86,11 +86,20 @@
             </nav>
             <!-- 搜索和菜单按钮 -->
             <div class="flex items-center space-x-4">
-                <button
-                        class="p-2 rounded-full hover:bg-gray-100 transition-custom"
-                >
-                    <i class="fas fa-search text-gray-600"> </i>
-                </button>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="search-input"
+                        placeholder="搜索文章..."
+                        class="hidden md:block w-64 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+                    />
+                    <button
+                        id="search-btn"
+                        class="md:absolute md:left-3 md:top-1/2 md:transform md:-translate-y-1/2 p-2 rounded-full hover:bg-gray-100 transition-custom"
+                    >
+                        <i class="fas fa-search text-gray-600"> </i>
+                    </button>
+                </div>
                 <button
                         class="p-2 rounded-full hover:bg-gray-100 transition-custom md:hidden"
                         id="mobile-menu-button"
@@ -130,6 +139,43 @@
         </div>
     </div>
 </header>
+
+<script>
+// 搜索功能
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBtn = document.getElementById('search-btn');
+    const searchInput = document.getElementById('search-input');
+    
+    // 搜索按钮点击事件
+    searchBtn.addEventListener('click', () => {
+        const keyword = searchInput.value.trim();
+        if (keyword) {
+            window.location.href = '/search?keyword=' + encodeURIComponent(keyword);
+        } else {
+            // 如果没有输入关键词，显示搜索页面
+            window.location.href = '/search';
+        }
+    });
+    
+    // 搜索框回车事件
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchBtn.click();
+        }
+    });
+    
+    // 移动端菜单切换
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+});
+</script>
+
 </body>
 </html>
 {{ end }}

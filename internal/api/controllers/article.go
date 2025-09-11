@@ -48,8 +48,8 @@ type ArticleResponse struct {
 
 type ArticleViewResponse struct {
 	models.Article
-	Categories []models.Category `json:"categories"`
-	Tags       []models.Tag      `json:"tags"`
+	Categories []CategoryResponse `json:"categories"`
+	Tags       []models.Tag       `json:"tags"`
 }
 
 type ArticlePageRequest struct {
@@ -178,10 +178,12 @@ func (a *ArticleController) Index(c *gin.Context) {
 	categoryID, _ := strconv.Atoi(c.Query("category_id"))
 	tagID, _ := strconv.Atoi(c.Query("tag_id"))
 	keyword := strings.TrimSpace(c.Query("keyword"))
+	sortType := strings.TrimSpace(c.DefaultQuery("sort", "latest")) // latest 或 hot
 
 	var articles []models.Article
 	var total int64
-	query := database.DB.Model(&models.Article{})
+	query := database.DB.Model(&models.Article{}).Where("status = ?", models.ArticleStatusPublished) // 只显示已发布的文章
+
 	if categoryID > 0 {
 		query = query.Joins("left join m_article_category ac ON m_article.id = ac.article_id").
 			Where("ac.category_id = ?", categoryID)
@@ -193,7 +195,14 @@ func (a *ArticleController) Index(c *gin.Context) {
 	if keyword != "" {
 		query = query.Where("title LIKE ? OR content LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
-	query.Order("m_article.is_top DESC, m_article.created_at DESC")
+
+	// 根据排序类型设置排序规则
+	if sortType == "hot" {
+		query.Order("m_article.is_top DESC, m_article.view_count DESC, m_article.created_at DESC")
+	} else {
+		query.Order("m_article.is_top DESC, m_article.created_at DESC")
+	}
+
 	query.Count(&total)
 
 	offset := (page - 1) * pageSize
@@ -211,7 +220,20 @@ func (a *ArticleController) Index(c *gin.Context) {
 		database.DB.Joins("JOIN m_article_category ac ON m_category.id = ac.category_id").
 			Where("ac.article_id = ?", articles[i].Id).
 			Find(&categories)
-		articleResArray[i].Categories = categories
+		categoriesRes, err := utils.ConvertSliceTo[CategoryResponse](&categories)
+		if err != nil {
+			common.ServerError(c, "参数错误: "+err.Error())
+			return
+		}
+		// 获取分类文章数量
+		for j := range categoriesRes {
+			var count int64
+			database.DB.Model(&models.ArticleCategory{}).
+				Where("category_id = ?", categoriesRes[j].Id).
+				Count(&count)
+			categoriesRes[j].ArticleCount = count
+		}
+		articleResArray[i].Categories = categoriesRes
 		var tags []models.Tag
 		database.DB.Joins("JOIN m_article_tag at ON m_tag.id = at.tag_id").
 			Where("at.article_id = ?", articles[i].Id).
@@ -222,6 +244,20 @@ func (a *ArticleController) Index(c *gin.Context) {
 	// 获取分类列表
 	var categories []models.Category
 	database.DB.Find(&categories)
+	// 转换为响应结构
+	categoriesRes, err := utils.ConvertSliceTo[CategoryResponse](&categories)
+	if err != nil {
+		common.ServerError(c, "参数错误: "+err.Error())
+		return
+	}
+	// 获取分类文章数量
+	for i := range categoriesRes {
+		var count int64
+		database.DB.Model(&models.ArticleCategory{}).
+			Where("category_id = ?", categoriesRes[i].Id).
+			Count(&count)
+		categoriesRes[i].ArticleCount = count
+	}
 
 	// 获取标签列表
 	var tags []models.Tag
@@ -229,7 +265,7 @@ func (a *ArticleController) Index(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "default/index.html", gin.H{
 		"articles":   articleResArray,
-		"categories": categories,
+		"categories": categoriesRes,
 		"tags":       tags,
 		"pagination": gin.H{
 			"page":      page,
@@ -240,6 +276,7 @@ func (a *ArticleController) Index(c *gin.Context) {
 		"current_category": categoryID,
 		"current_tag":      tagID,
 		"keyword":          keyword,
+		"sort_type":        sortType,
 	})
 }
 
@@ -253,13 +290,17 @@ func (a *ArticleController) Show(c *gin.Context) {
 		return
 	}
 
-	var article ArticleViewResponse
-	if err := database.DB.Preload("Category").
-		Where("id = ?", id).
+	var article models.Article
+	if err := database.DB.Where("id = ? AND status = ?", id, models.ArticleStatusPublished).
 		First(&article).Error; err != nil {
 		c.HTML(http.StatusNotFound, "error/error.html", gin.H{
 			"message": "文章不存在",
 		})
+		return
+	}
+	articleRes, err := utils.ConvertTo[ArticleViewResponse](article)
+	if err != nil {
+		common.ServerError(c, "参数错误: "+err.Error())
 		return
 	}
 
@@ -267,8 +308,27 @@ func (a *ArticleController) Show(c *gin.Context) {
 	database.DB.Model(&article).Update("view_count", gorm.Expr("view_count + ?", 1))
 	article.ViewCount++
 
-	c.HTML(http.StatusOK, "article.html", gin.H{
-		"article": article,
+	// 获取文章分类
+	var categories []models.Category
+	database.DB.Joins("JOIN m_article_category ac ON m_category.id = ac.category_id").
+		Where("ac.article_id = ?", id).
+		Find(&categories)
+	to, err := utils.ConvertSliceTo[CategoryResponse](&categories)
+	if err != nil {
+		common.ServerError(c, "参数错误: "+err.Error())
+		return
+	}
+	articleRes.Categories = to
+
+	// 获取文章标签
+	var tags []models.Tag
+	database.DB.Joins("JOIN m_article_tag at ON m_tag.id = at.tag_id").
+		Where("at.article_id = ?", id).
+		Find(&tags)
+	articleRes.Tags = tags
+
+	c.HTML(http.StatusOK, "default/article.html", gin.H{
+		"article": articleRes,
 		"title":   article.Title,
 	})
 }

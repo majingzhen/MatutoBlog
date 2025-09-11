@@ -5,6 +5,7 @@ import (
 	"matuto-blog/internal/models"
 	"matuto-blog/pkg/common"
 	"matuto-blog/pkg/utils"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,11 @@ type CategoryRequest struct {
 	MetaKeywords    string `json:"metaKeywords"`
 	MetaDescription string `json:"metaDescription"`
 	Status          int    `json:"status"`
+}
+
+type CategoryResponse struct {
+	models.Category
+	ArticleCount int64 `json:"articleCount"`
 }
 
 // CategoryPageRequest 分类分页请求
@@ -180,4 +186,36 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 		return
 	}
 	common.SuccessWithMessage(ctx, "分类更新成功", nil)
+}
+
+// CategoryListPage 分类列表页面
+func (c *CategoryController) CategoryListPage(ctx *gin.Context) {
+	// 获取所有启用的分类及其文章数量
+	var categories []models.Category
+	database.DB.Where("status = ?", 1).Order("created_at DESC").Find(&categories)
+
+	// 为每个分类计算文章数量
+	type CategoryWithCount struct {
+		models.Category
+		ArticleCount int64 `json:"article_count"`
+	}
+
+	var categoriesWithCount []CategoryWithCount
+	for _, category := range categories {
+		var count int64
+		database.DB.Model(&models.ArticleCategory{}).
+			Joins("JOIN m_article ON m_article.id = m_article_category.article_id").
+			Where("m_article_category.category_id = ? AND m_article.status = ?", category.Id, 1).
+			Count(&count)
+
+		categoriesWithCount = append(categoriesWithCount, CategoryWithCount{
+			Category:     category,
+			ArticleCount: count,
+		})
+	}
+
+	ctx.HTML(http.StatusOK, "default/category.html", gin.H{
+		"categories": categoriesWithCount,
+		"title":      "文章分类",
+	})
 }
