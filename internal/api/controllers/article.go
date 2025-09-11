@@ -240,6 +240,13 @@ func (a *ArticleController) Index(c *gin.Context) {
 			Find(&tags)
 		articleResArray[i].Tags = tags
 	}
+	// 获取推荐阅读
+	var recommendArticles []models.Article
+	database.DB.Model(&models.Article{}).
+		Where("status = ?", models.ArticleStatusPublished).
+		Order("great_count DESC").
+		Limit(5).
+		Find(&recommendArticles)
 
 	// 获取分类列表
 	var categories []models.Category
@@ -277,6 +284,7 @@ func (a *ArticleController) Index(c *gin.Context) {
 		"current_tag":      tagID,
 		"keyword":          keyword,
 		"sort_type":        sortType,
+		"recommend":        recommendArticles,
 	})
 }
 
