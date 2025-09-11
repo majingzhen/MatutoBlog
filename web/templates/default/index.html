@@ -15,12 +15,12 @@
             <h2 class="text-2xl font-bold text-dark">最新文章</h2>
             <div class="flex space-x-2">
               <a href="/?sort=latest{{if .current_category}}&category_id={{.current_category}}{{end}}{{if .current_tag}}&tag_id={{.current_tag}}{{end}}{{if .keyword}}&keyword={{.keyword}}{{end}}"
-                class="px-4 py-2 rounded-lg {{if eq .sort_type "latest"}}bg-primary text-white{{else}}bg-gray-100 text-gray-700{{end}} hover:bg-primary hover:text-white transition-custom"
+                class='px-4 py-2 rounded-lg {{if eq .sort_type "latest"}}bg-primary text-white{{else}}bg-gray-100 text-gray-700{{end}} hover:bg-primary hover:text-white transition-custom'
               >
                 最新
               </a>
               <a href="/?sort=hot{{if .current_category}}&category_id={{.current_category}}{{end}}{{if .current_tag}}&tag_id={{.current_tag}}{{end}}{{if .keyword}}&keyword={{.keyword}}{{end}}"
-                class="px-4 py-2 rounded-lg {{if eq .sort_type "hot"}}bg-primary text-white{{else}}bg-gray-100 text-gray-700{{end}} hover:bg-primary hover:text-white transition-custom"
+                class='px-4 py-2 rounded-lg {{if eq .sort_type "hot"}}bg-primary text-white{{else}}bg-gray-100 text-gray-700{{end}} hover:bg-primary hover:text-white transition-custom'
               >
                 热门
               </a>
@@ -128,42 +128,9 @@
             </ul>
           </div>
           <!-- 热门标签 -->
-          <div class="bg-white rounded-xl shadow-md p-6">
-            <h3 class="text-xl font-bold text-dark mb-6">热门标签</h3>
-            <div class="flex flex-wrap gap-2">
-              {{range .tags}}
-              <a
-                href="/tag/{{.Id}}"
-                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-primary hover:text-white transition-custom"
-              >
-                #{{.Name}}
-              </a>
-              {{end}}
-            </div>
-          </div>
+            {{ template "default/components/hotTag.html" . }}
           <!-- 推荐阅读 -->
-          <div class="bg-white rounded-xl shadow-md p-6">
-            <h3 class="text-xl font-bold text-dark mb-6">推荐阅读</h3>
-              {{ range .recommend }}
-            <div class="space-y-4">
-              <a href="/article/{{.Id}}" class="flex gap-4 group">
-                <img
-                  src="https://design.gemcoder.com/staticResource/echoAiSystemImages/a099aedecbe57d8d4afbfb0bb13271f3.png"
-                  alt="推荐文章图片"
-                  class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                />
-                <div>
-                  <h4
-                    class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
-                  >
-                      {{.Title}}
-                  </h4>
-                  <p class="text-xs text-gray-500 mt-1">{{.CreatedAt.Format "2006-01-02"}}</p>
-                </div>
-              </a>
-            </div>
-              {{end}}
-          </div>
+            {{ template "default/components/recommendArticle.html" . }}
         </div>
       </div>
     </main>

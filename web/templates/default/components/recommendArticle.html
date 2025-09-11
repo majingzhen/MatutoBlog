@@ -1,0 +1,28 @@
+{{ define "default/components/recommendArticle.html" }}
+<html lang="en">
+<body>
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h3 class="text-xl font-bold text-dark mb-6">推荐阅读</h3>
+    {{ range .recommend }}
+    <div class="space-y-4">
+        <a href="/article/{{.Id}}" class="flex gap-4 group" style="margin-bottom: 10px">
+            <img
+                    src="https://design.gemcoder.com/staticResource/echoAiSystemImages/a099aedecbe57d8d4afbfb0bb13271f3.png"
+                    alt="推荐文章图片"
+                    class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+            />
+            <div>
+                <h4
+                        class="font-medium text-dark group-hover:text-primary transition-custom line-clamp-2"
+                >
+                    {{.Title}}
+                </h4>
+                <p class="text-xs text-gray-500 mt-1">{{.CreatedAt.Format "2006-01-02"}}</p>
+            </div>
+        </a>
+    </div>
+    {{end}}
+</div>
+</body>
+</html>
+{{ end }}
